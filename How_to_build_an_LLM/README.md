@@ -17,9 +17,10 @@
   - [x] Add and pre-process the [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. I will only use a small portion of the FineWeb-edu, which is ~5.84 TB, while the FineWeb is ~54.8 TB.
   - [ ] Implement Llama 3 architecture components.
     - [x] Build the [tokenizer](./model/tokenizer.ipynb).
-    - [ ] The transformer [decoder](./model/decoder.ipynb)
     - [ ] [RMSNorm](./model/RMSNorm.ipynb)
-    - [ ] [GQA Attention & RoPE](./model/GroupedQueryAttention.ipynb)
+    - [ ] [RoPE](./model/RoPE.ipynb)
+    - [ ] [GQA Attention](./model/GroupedQueryAttention.ipynb)
+    - [ ] The transformer [decoder](./model/decoder.ipynb)
   - [ ] Train a scaled down model, along side its tokenizer.
 
 - [ ] Implement Multi-modal so that the model works with:
@@ -30,8 +31,9 @@
   - [ ] Vision
 - [ ] Import a pre-trained Llama model to showcase a SOTA model.
 
-## Architecture
+## Llama 3 Architecture
 
+-#TODO make sure this image looks decent in new tab
 ![Llama 3 Architecture Text-Only](./showcase_images/llama_and_transformer_diagram.png)
 
 - ✨ All the model's layers are implemented in their own notebooks in [./model](./model/).

@@ -10,4 +10,3 @@ Why **RoPE** is only on Q and K: The attention mechanism calculates the relevanc
 
 **SwiGLU:** "We replace the ReLU non-linearity by the SwiGLU activation function..." (This confirms step 11).
 
-**Rotary Embeddings (RoPE):** "We replace the absolute positional embeddings... with rotary positional embeddings (RoPE)... at each layer of the network."
