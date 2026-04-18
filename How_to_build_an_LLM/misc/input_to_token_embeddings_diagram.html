@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+    </head>
+    <body>
+        <div
+            style="
+                font-family:
+                    &quot;Segoe UI&quot;, Tahoma, Geneva, Verdana, sans-serif;
+                align-items: center;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                background: #fafafa;
+                border-radius: 12px;
+            "
+        >
+            <div
+                style="
+                    width: 100%;
+                    max-width: 600px;
+                    border: 2px solid #4a90e2;
+                    background: white;
+                    border-radius: 8px;
+                    padding: 5px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                "
+            >
+                <h4 style=" color: #4a90e2">The Input</h4>
+                <div style="font-size: 13px; color: #444">
+                    The input is a list of documents as raw text:
+                    <pre
+                        style="
+                            background: #f4f4f4;
+                            padding: 2px;
+                            border-radius: 4px;
+                            border: 1px solid #ddd;
+                            font-family: monospace;
+                        "
+                    >
+[ 
+  "The brown rabbit" # Doc 1
+  "I write code"     # Doc 2
+  ...
+  "Data is good"     # Doc n
+]</pre
+                    >
+                </div>
+            </div>
+
+            <img src="../showcase_images/arrow_down.png" alt="arrow_down" />
+
+            <div
+                style="
+                    width: 100%;
+                    max-width: 600px;
+                    border: 2px solid #50c878;
+                    background: white;
+                    border-radius: 8px;
+                    padding: 5px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                "
+            >
+                <h4 style=" color: #50c878">
+                    A Trained Tokenizer performs:
+                </h4>
+                <div style="font-size: 13px; color: #444">
+                    <p><strong>1. Sub-word Splitting:</strong></p>
+                    <pre
+                        style="
+                            display: block;
+                            background: #f9f9f9;
+                            padding: 2px;
+                            border: 1px solid #eee;
+                        "
+                    >
+Doc 1: ["The",  "Ġbrown", "Ġrabbit"] # The "Ġ" represents the white-space
+Doc 2: ["I",    "Ġwrite", "Ġcode"  ]
+Doc n: ["Data", "Ġis",    "Ġgood"  ]</pre
+                    >
+                    <p><strong>2. Converts to Token IDs:</strong></p>
+                    <pre
+                        style="
+                            display: block;
+                            background: #00fe1525;
+                            padding: 2px;
+                            border: 1px dashed #2e7d32;
+                        "
+                    >
+Doc 1: [512, 1024, 850] # 512 represents "The"
+Doc 2: [ 10,  440, 990] # 440 represents "Ġwrite"
+Doc n: [ 88,  310, 500] # 500 represents "Ġgood"
+      </pre
+                    >
+                    <p>
+                        <strong>3.</strong> Appends an end token
+                        (<strong><|end_of_doc|></strong>) between the documents,
+                        and then dumps those tokens into a flat 1D list (2
+                        represents the <|end_of_doc|> token.):
+                    </p>
+                    <pre
+                        style="
+                            display: block;
+                            background: #00fe1525;
+                            padding: 2px;
+                            border: 1px dashed #2e7d32;
+                        "
+                    >
+[512, 1024, 850, 2, 10, 440, 990, 2, 88, 310, 500, 2]
+      </pre
+                    >
+                    <p>
+                        <strong>Context Window:</strong> Note that the
+                        DataLoader will slice the flat <strong>1D</strong> list so that it fits
+                        into the model's fixed context window length. For
+                        example context window = 8, the <strong>1D</strong> list would look like:
+                    </p>
+                    <pre
+                        style="
+                            display: block;
+                            background: #00fe1525;
+                            padding: 2px;
+                            border: 1px dashed #2e7d32;
+                        "
+                    >
+[512, 1024, 850, 2, 10, 440, 990, 2] 
+# This passes exactly 8 tokens, so only Doc 1 and Doc 2 
+# are passed into the Token Embeddings layer.
+      </pre
+                    >
+                </div>
+            </div>
+
+            <img src="../showcase_images/arrow_down.png" alt="arrow_down" />
+
+            <div
+                style="
+                    width: 100%;
+                    max-width: 600px;
+                    border: 2px solid #ff00d9;
+                    background: white;
+                    border-radius: 8px;
+                    padding: 5px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                "
+            >
+                <h4 style=" color: #ff00d9">
+                    Token Embeddings
+                </h4>
+                <div style="font-size: 13px; color: #444">
+                    The dataloader stacks the <strong>1D</strong> token lists into a <strong>2D</strong> tensor (batch_size, context_len).
+
+                    The Token Embedding layer then replaces each integer with a contiguous vector, expanding it into a <strong>3D</strong> tensor of shape (batch_size, context_len, d_model).
+                    <pre
+                        style="
+                            background: #fff0fb;
+                            padding: 2px;
+                            border-radius: 4px;
+                            border: 1px solid #ffd1f5;
+                            font-family: monospace;
+                            font-size: 11px;
+                        "
+                    >
+[
+    [
+        [ 0.33, -0.91, ...,  0.22],      # Vector for "The" (ID 512)
+        [ 0.77,  0.11, ...,  0.54],      # Vector for "Ġbrown" (ID 1024)
+        [-0.44, -0.33, ...,  0.61],      # Vector for "Ġrabbit" (ID 850)
+        [ 0.99,  0.88, ...,  0.11],      # Vector for <|end_of_doc|> (ID 2)
+        [-0.15,  0.22, ..., -0.87],      # Vector for "I" (ID 10)
+        [ 0.65,  0.43, ...,  0.34],      # Vector for "Ġwrite" (ID 440)
+        [-0.23, -0.76, ..., -0.19],      # Vector for "Ġcode" (ID 990)
+        [ 0.99,  0.88, ...,  0.11]       # Vector for <|end_of_doc|> (ID 2)
+    ]
+]
+    </pre
+                    >
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

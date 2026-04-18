@@ -1,5 +1,9 @@
 # How To Build An LLM
 
+-# TODO make this its own repo
+
+#TODO make sure this renders in the github repo
+
 ✨ This project is a guide to building a large language model like ChatGPT, Gemini, or Llama from scratch. I will build and train a scale down version of the Llama 3 architecture (Note: training a full model is very expensive!). Also, I will add options to import pre-trained Llama 3.1 models. I choose Llama over the Gemini and ChatGPT models because it is the most open-sourced and well-documented. Almost all LLMs are built on the Transformer-decoder architecture, with some minor tweaks.
 
 - There are two phases when training an LLM are: # TODO maybe add this info in a train notebook
@@ -17,10 +21,12 @@
   - [x] Add and pre-process the [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. I will only use a small portion of the FineWeb-edu, which is ~5.84 TB, while the FineWeb is ~54.8 TB.
   - [ ] Implement Llama 3 architecture components.
     - [x] Build the [tokenizer](./model/tokenizer.ipynb).
-    - [ ] [RMSNorm](./model/RMSNorm.ipynb)
     - [x] [RoPE](./model/RoPE.ipynb)
-    - [ ] [GQA Attention](./model/GQA.ipynb)
-    - [ ] The transformer [decoder](./model/decoder.ipynb)
+    - [x] [GQA Attention](./model/GQA.ipynb)
+    - [x] [SwiGLU Feed Forward](./model/SwiGLU_FFN.ipynb)
+    - [x] [RMSNorm](./model/RMSNorm.ipynb)
+    - [ ] AdamW Optimizer #TODO
+    - [x] The transformer [decoder](./model/decoder.ipynb)
   - [ ] Train a scaled down model, along side its tokenizer.
     - [ ] Make sure that things like special tokens match the larger Llama model! So I dont have two use different special tokens, and other things differently when I use my scaled down or full Llama model. CANDEL
 
@@ -31,7 +37,7 @@
   - [ ] Speech
   - [ ] Vision
 - [ ] Import a pre-trained Llama model to showcase a SOTA model.
-- [ ] Make sure all the math is rendered correctly in the github repo.
+- [ ] The Llama 1 and 2 are from different papers, anywhere in code where I have a link to the Llama 1 & 2 papers, fix it!
 
 ## Llama 3 Architecture
 
