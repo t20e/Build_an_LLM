@@ -9,7 +9,7 @@
 **Useful Links:**
 
 - [Andrej Karpathy's Deep Dive into LLMs video](https://www.youtube.com/watch?v=7xTGNNLPyMI)
-- #TODO add link to my transformer
+- [My Transformer project](https://github.com/t20e/AI_projects_and_res/tree/main/Transformer)
 
 **Goals:**
 
@@ -18,10 +18,11 @@
   - [ ] Implement Llama 3 architecture components.
     - [x] Build the [tokenizer](./model/tokenizer.ipynb).
     - [ ] [RMSNorm](./model/RMSNorm.ipynb)
-    - [ ] [RoPE](./model/RoPE.ipynb)
-    - [ ] [GQA Attention](./model/GroupedQueryAttention.ipynb)
+    - [x] [RoPE](./model/RoPE.ipynb)
+    - [ ] [GQA Attention](./model/GQA.ipynb)
     - [ ] The transformer [decoder](./model/decoder.ipynb)
   - [ ] Train a scaled down model, along side its tokenizer.
+    - [ ] Make sure that things like special tokens match the larger Llama model! So I dont have two use different special tokens, and other things differently when I use my scaled down or full Llama model. CANDEL
 
 - [ ] Implement Multi-modal so that the model works with:
   - Note: The multi-modal architecture has a Encoder+Decoder architecture.
@@ -30,10 +31,10 @@
   - [ ] Speech
   - [ ] Vision
 - [ ] Import a pre-trained Llama model to showcase a SOTA model.
+- [ ] Make sure all the math is rendered correctly in the github repo.
 
 ## Llama 3 Architecture
 
--#TODO make sure this image looks decent in new tab
 ![Llama 3 Architecture Text-Only](./showcase_images/llama_and_transformer_diagram.png)
 
 - ✨ All the model's layers are implemented in their own notebooks in [./model](./model/).
@@ -42,10 +43,10 @@ The fundamental block of an LLM is the **Transformer Decoder**. Most modern fron
 
 The Llama architecture was first described in [LlaMA: Open and Efficient Foundation Language Models](https://arxiv.org/pdf/2302.13971), which is the Llama 1 and 2 models. The Llama 3 which is described in this paper: [The Llama 3 Herd of Models](https://arxiv.org/pdf/2407.21783), made a few modifications such as:
 
-1. Adding **GQA Attention** with $\bold{8}$ key-value heads.
+1. Adding **GQA Attention** with $\mathbf{8}$ key-value heads.
 2. Used an attention mask that prevents self-attention between different documents withing the same sequence.
-3. Used a vocabulary with $128$K total tokens.
-   1. Of which $100$K is from the **tiktoken** library, and the other $28$K is additional tokens to better support non-English languages.
+3. Used a vocabulary with $128\text{K}$ total tokens.
+   1. Of which $100\text{K}$ is from the **tiktoken** library, and the other $28\text{K}$ is additional tokens to better support non-English languages.
 4. Increased the **RoPE** base frequency hyperparameter to $500{,}000$
 
 **#TODOs:**
