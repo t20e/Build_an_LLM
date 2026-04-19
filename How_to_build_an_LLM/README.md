@@ -12,6 +12,7 @@
 
 **Useful Links:**
 
+- [Brendan Bycroft LLMs Visualization](https://bbycroft.net/llm)
 - [Andrej Karpathy's Deep Dive into LLMs video](https://www.youtube.com/watch?v=7xTGNNLPyMI)
 - [My Transformer project](https://github.com/t20e/AI_projects_and_res/tree/main/Transformer)
 
@@ -19,16 +20,20 @@
 
 - [ ] Build out the Llama 3 architecture:
   - [x] Add and pre-process the [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. I will only use a small portion of the FineWeb-edu, which is ~5.84 TB, while the FineWeb is ~54.8 TB.
-  - [ ] Implement Llama 3 architecture components.
+  - [x] Implement Llama 3 architecture components.
     - [x] Build the [tokenizer](./model/tokenizer.ipynb).
     - [x] [RoPE](./model/RoPE.ipynb)
     - [x] [GQA Attention](./model/GQA.ipynb)
     - [x] [SwiGLU Feed Forward](./model/SwiGLU_FFN.ipynb)
     - [x] [RMSNorm](./model/RMSNorm.ipynb)
-    - [ ] AdamW Optimizer #TODO
+    - [x] AdamW Optimizer
     - [x] The transformer [decoder](./model/decoder.ipynb)
-  - [ ] Train a scaled down model, along side its tokenizer.
-    - [ ] Make sure that things like special tokens match the larger Llama model! So I dont have two use different special tokens, and other things differently when I use my scaled down or full Llama model. CANDEL
+  - [ ] Build the training pipeline.
+    - [ ] Pre-training
+    - [ ] Post-training
+    - [ ] Train a scaled down model, along side its tokenizer.
+      - [ ] Scaled the model down so it can be trained on my Mac in a reasonable amount of time.
+      - [ ] Make sure that things like special tokens match the larger Llama model! So I dont have two use different special tokens, and other things differently when I use my scaled down or full Llama model. CANDEL
 
 - [ ] Implement Multi-modal so that the model works with:
   - Note: The multi-modal architecture has a Encoder+Decoder architecture.
@@ -45,15 +50,16 @@
 
 - ✨ All the model's layers are implemented in their own notebooks in [./model](./model/).
 
-The fundamental block of an LLM is the **Transformer Decoder**. Most modern frontier LLMs modify the decoder by adding a **RMSNorm**, **RoPE**, and **GQA** sub-layer. There are other variations, for example the Google [Gemma model has **GeGLU**](https://developers.googleblog.com/gemma-explained-new-in-gemma-2/#:~:text=the%20new%20models%3A-,Key%20Differences,-Gemma%202%20shares) non-linearity.
+The fundamental block of an LLM is the **Transformer Decoder**. Most modern frontier LLMs modify the decoder by adding a **RMSNorm**, **RoPE**, and **GQA** sub-layer. There are other variations, for example the [Google Gemma model](https://developers.googleblog.com/gemma-explained-new-in-gemma-2/#:~:text=the%20new%20models%3A-,Key%20Differences,-Gemma%202%20shares) has **GeGLU** non-linearity.
 
-The Llama architecture was first described in [LlaMA: Open and Efficient Foundation Language Models](https://arxiv.org/pdf/2302.13971), which is the Llama 1 and 2 models. The Llama 3 which is described in this paper: [The Llama 3 Herd of Models](https://arxiv.org/pdf/2407.21783), made a few modifications such as:
+The Llama architecture was first described in [LlaMA: Open and Efficient Foundation Language Models](https://arxiv.org/pdf/2302.13971), which is Llama 1. The Llama 3 which is described in this paper: [The Llama 3 Herd of Models](https://arxiv.org/pdf/2407.21783), made a few modifications such as:
 
 1. Adding **GQA Attention** with $\mathbf{8}$ key-value heads.
 2. Used an attention mask that prevents self-attention between different documents withing the same sequence.
 3. Used a vocabulary with $128\text{K}$ total tokens.
    1. Of which $100\text{K}$ is from the **tiktoken** library, and the other $28\text{K}$ is additional tokens to better support non-English languages.
 4. Increased the **RoPE** base frequency hyperparameter to $500{,}000$
+
 
 **#TODOs:**
 
