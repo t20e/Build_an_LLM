@@ -1,6 +1,7 @@
 # How To Build An LLM
 
 -# TODO make this its own repo
+-# TODO The Llama 1 and 2 are from different papers, anywhere in code where I have a link to the Llama 1 & 2 papers, fix it!
 
 #TODO make sure this renders in the github repo
 
@@ -18,31 +19,25 @@
 
 **Goals:**
 
-- [ ] Build out the Llama 3 architecture:
-  - [x] Add and pre-process the [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. I will only use a small portion of the FineWeb-edu, which is ~5.84 TB, while the FineWeb is ~54.8 TB.
-  - [x] Implement Llama 3 architecture components.
-    - [x] Build the [tokenizer](./model/tokenizer.ipynb).
-    - [x] [RoPE](./model/RoPE.ipynb)
-    - [x] [GQA Attention](./model/GQA.ipynb)
-    - [x] [SwiGLU Feed Forward](./model/SwiGLU_FFN.ipynb)
-    - [x] [RMSNorm](./model/RMSNorm.ipynb)
-    - [x] AdamW Optimizer
-    - [x] The transformer [decoder](./model/decoder.ipynb)
-  - [ ] Build the training pipeline.
-    - [ ] Pre-training
-    - [ ] Post-training
-    - [ ] Train a scaled down model, along side its tokenizer.
-      - [ ] Scaled the model down so it can be trained on my Mac in a reasonable amount of time.
-      - [ ] Make sure that things like special tokens match the larger Llama model! So I dont have two use different special tokens, and other things differently when I use my scaled down or full Llama model. CANDEL
-
+- [x] Add and pre-process the [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. I will only use a small portion of the FineWeb-edu, which is ~5.84 TB, while the FineWeb is ~54.8 TB.
+- [x] Implement Llama 3 architecture components.
+  - [x] Build the [tokenizer](./model/tokenizer.ipynb).
+  - [x] [RoPE](./model/RoPE.ipynb)
+  - [x] [GQA Attention](./model/GQA.ipynb)
+  - [x] [SwiGLU Feed Forward](./model/SwiGLU_FFN.ipynb)
+  - [x] [RMSNorm](./model/RMSNorm.ipynb)
+  - [x] AdamW Optimizer
+  - [x] The transformer [decoder](./model/decoder.ipynb)
+- [ ] Build the training pipeline.
+  - [ ] Pre-training
+  - [ ] Post-training
 - [ ] Implement Multi-modal so that the model works with:
-  - Note: The multi-modal architecture has a Encoder+Decoder architecture.
-  - [ ] Chat assistant
   - [ ] Code
   - [ ] Speech
   - [ ] Vision
-- [ ] Import a pre-trained Llama model to showcase a SOTA model.
-- [ ] The Llama 1 and 2 are from different papers, anywhere in code where I have a link to the Llama 1 & 2 papers, fix it!
+- [ ] Train a scaled down model along with its tokenizer, that is feasible on my Mac.
+  - [ ] CANDEL. Make sure that things like special tokens match the larger Llama model! So I don't have two use different special tokens, and other things differently when I use my scaled down or full Llama model.
+- [ ] Import a Pre-trained Llama model (e.g., Llama 3.1 3B) from HuggingFace to showcase a SOTA model working with my built-out architecture.
 
 ## Llama 3 Architecture
 

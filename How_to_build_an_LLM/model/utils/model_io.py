@@ -30,6 +30,7 @@ def save_checkpoint(
         scheduler: The scheduler object.
         step_counter: The step counter that was reached during training.
         loss_history: The loss history during training.
+        avg_loss: The last loss during training.
     """
 
     checkpoint_name = f"scaled_down_llama_stepCount_{step_counter}.pt"
@@ -43,7 +44,7 @@ def save_checkpoint(
             "scheduler_state_dict": scheduler.state_dict(),
             "step_counter": step_counter,
             "loss_history": loss_history,
-            "loss": avg_loss,
+            "avg_loss": avg_loss,
         },
         checkpoint_path,
     )
