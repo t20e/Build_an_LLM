@@ -9,7 +9,7 @@
 
 - There are two phases when training an LLM are: # TODO maybe add this info in a train notebook
   - Phase 1: You train a base model on a massive corpus of raw text using self-supervised learning, where its only objective is to predict the next token (e.g., the next word in a sentence). Here the model learns grammar, facts, and reasoning.
-  - Phase 2: You take the base model and train it to become a chat/assistant model.This is done by applying fine tuning using structured conversational data (Prompt/Response pairs), which is often followed by Reinforcement Learning form Human Feedback or direct preference optimization to force the model to behave an assistant.
+  - Phase 2: You take the base model and train it to become a chat/assistant model.This is done by applying fine tuning using structured conversational data (Prompt/Response pairs), which is often followed by Reinforcement Learning from Human Feedback or direct preference optimization to force the model to behave an assistant.
 
 **Useful Links:**
 

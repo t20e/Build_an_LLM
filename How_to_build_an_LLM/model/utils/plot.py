@@ -4,7 +4,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from llama_config import BaseConfig
+    from llama_configs import BaseConfig
 
 
 def plot_loss_history(loss_history, cfg: BaseConfig):
