@@ -6,7 +6,7 @@ import torch
 
 if TYPE_CHECKING:
     from llama_configs import BaseConfig
-    from model.training import PreTrainModel
+    from model.pre_training import PreTrainModel
     from model.decoder import Decoder
 
 
@@ -31,10 +31,8 @@ def save_checkpoint(
         loss_history: The loss history during training.
         avg_loss: The last loss during training.
     """
-    # TODO how should I resolve when a checkpoint is already saved to the same name?
-
-    chpt_dir_path = cfg.CHPT_DIR / cfg.model_name
-    chpt_dir_path.mkdir(parents=True, exist_ok=True)
+    chpt_filename = f"step_{step_counter:06d}.pt"
+    save_path = cfg.CURR_CHPT_DIR / chpt_filename
 
     torch.save(
         {
@@ -42,56 +40,53 @@ def save_checkpoint(
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
             "scheduler_state_dict": scheduler.state_dict(),
-            "step_counter": step_counter,
             "loss_history": loss_history,
             "avg_loss": avg_loss,
         },
-        chpt_dir_path / f"{cfg.model_name}.pt",
+        save_path,
     )
 
-    print(f"Saved Checkpoint to -> {chpt_dir_path}")
+    # Update latest.txt
+    with open(cfg.CURR_CHPT_DIR / "latest.txt", "w") as f:
+        f.write(chpt_filename)
+
+    print(f"Saved Checkpoint to -> {save_path}")
 
 
-def load_checkpoint(trainer: PreTrainModel, cfg: BaseConfig) -> int:
+def load_checkpoint( 
+        cfg: BaseConfig,
+        model: torch.nn.Module,
+        chpt_path: Path,
+        optimizer: torch.optim.Optimizer = None,
+        scheduler: torch.optim.lr_scheduler.LambdaLR = None,
+        ):
     """
-    Load a checkpoint.
+    Load a checkpoint. If optimizer and scheduler are provided, their states are also loaded.
 
     Args:
-        load_path: The path that contains all the model files. e.g., ./model/checkpoints/<model_name>.
-    Returns:
-        The last step the checkpoint was trained on.
+        chpt_path: Direct path to the checkpoint file.
     """
+    if not chpt_path.exists():
+        print(f"Error: No checkpoint found at: {chpt_path}")
+        return
+    
+    print(f"Loading checkpoint at: {chpt_path}...")
+    checkpoint = torch.load(chpt_path, map_location=cfg.device, weights_only=True)
 
-    chpt_dir_path = cfg.CHPT_DIR / cfg.model_name
-    chpt_dir_path.mkdir(parents=True, exist_ok=True)
+    model.load_state_dict(checkpoint["model_state_dict"]) # weights
 
-
-    if chpt_dir_path.is_dir():
-        print(f"Loading checkpoint from: {cfg.checkpoint_name}...")
-        chpt_file = chpt_dir_path / f"{cfg.model_name}.pt"
-        chpt = torch.load(chpt_dir_path, map_location=cfg.device)
-
-        # Load all states into the trainer
-        trainer.model.load_state_dict(chpt["model_state_dict"])
-        trainer.optimizer.load_state_dict(chpt["optimizer_state_dict"])
+    # Only load the optimizer and scheduler, when continuing training
+    if optimizer and "optimizer_state_dict" in checkpoint:
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
         # MPS device bug issue, fix by moving optimizer state tensors to mps device
-        for state in trainer.optimizer.state.values():
+        for state in optimizer.state.values():
             for k, v in state.items():
                 if isinstance(v, torch.Tensor):
                     state[k] = v.to(cfg.device)
 
-        if "scheduler_state_dict" in chpt:
-            trainer.scheduler.load_state_dict(chpt["scheduler_state_dict"])
-        if "step_counter" in chpt:
-            trainer.step_counter = chpt["step_counter"]
+    if scheduler and "scheduler_state_dict" in checkpoint:
+        scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
 
-        last_step = chpt.get("step_counter", 0)
-        print(f"\nResuming training from Step {last_step}...")
-        return last_step
-
-    else:
-        print(f"\n\nCheckpoint not found at {chpt_dir_path}! Check configurations!")
-        import sys
-        sys.exit(1)
-
+    cfg.step_counter = checkpoint.get("step_counter", 0)
+    print(f"Successfully loaded checkpoint: {chpt_path.name} (Step: {cfg.step_counter})")
