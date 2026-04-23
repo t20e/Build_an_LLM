@@ -21,9 +21,8 @@ PHASES_MAP = {
     "sft": {
         "suffix": "_SFT",
         "tokenizer": BPETokenizer,
-        # "trainer": None,
-        "trainer": PreTrainingModel,
-        "model": TextOnlyModel, # TODO remove this or edit it this is only for testing
+        "trainer": None,
+        "model": None,
         "chpt_dir": "Scaled_down_Llama_3_1_SFT",
     },
     "dpo": {
@@ -83,18 +82,27 @@ if __name__ == "__main__":
     # ---------- Parse and validate the arguments ----------
     args = parser.parse_args()
     cfg = CONFIG_MAP[args.model]()
-    print("\n\nBEFORE CONFIG")
-    print(cfg)
 
     model = PHASES_MAP[args.phase]["model"](cfg).to(cfg.device)
 
-    checkpoint_path, is_transition, new_save_path = resolve_checkpoint_path(cfg, args, PHASES_MAP)
+    checkpoint_path, is_transition, new_save_path = resolve_checkpoint_path(
+        cfg, args, PHASES_MAP
+    )
     cfg.CURR_CHPT_DIR = new_save_path
+
+    if args.dry_run:
+        print("\n------------ Dry Run ------------")
+        cfg.gradient_accumulation_steps = 1
+        cfg.token_budget = 1 * cfg.global_batch_size_tokens
+        cfg.CURR_CHPT_DIR = cfg.CHPTS_DIR / "Scaled_down_Llama_3_1_DRY_RUN"
+        cfg.CURR_CHPT_DIR.mkdir(parents=True, exist_ok=True)
 
     if args.phase == "inference":
         print("\n-------- Running inference... --------")
         load_checkpoint(cfg, model, checkpoint_path)
+        print("-" * 64)
         print(cfg)
+        print("-" * 64)
     else:
         TrainerClass = PHASES_MAP[args.phase]["trainer"]
         if not TrainerClass:
@@ -108,7 +116,7 @@ if __name__ == "__main__":
 
         if checkpoint_path:
             cfg.load_config_from_json(checkpoint_path.parent / "config.json")
-            cfg.CURR_CHPT_DIR = new_save_path # Paths are not saved to config.json, to allow moving from one system to another, so set the save path here.
+            cfg.CURR_CHPT_DIR = new_save_path  # Paths are not saved to config.json, to allow moving from one system to another, so set the save path here.
             print("\nWill save the new model to", new_save_path)
 
             # Check if we have to load the optimizer and scheduler from the checkpoint, if we are transitioning we will only load the model's weights, and not its optimizer and scheduler.
@@ -122,7 +130,10 @@ if __name__ == "__main__":
                 optimizer=load_opt,
                 scheduler=load_sch,
             )
+
+        print("-" * 64)
         print(cfg)
+        print("-" * 64)
         print(f"\n-------- Starting {args.phase.upper()} Phase... --------")
         tokenizer = PHASES_MAP[args.phase]["tokenizer"](cfg)
         success, loaded_tokenizer = tokenizer.load_tokenizer()
@@ -130,4 +141,4 @@ if __name__ == "__main__":
             tokenizer = loaded_tokenizer.train_tokenizer(get_raw_dataset())
 
         dataloader = create_causal_dataloader(cfg, loaded_tokenizer)
-        # trainer.train(dataloader)
+        trainer.train(dataloader)
