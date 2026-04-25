@@ -1,3 +1,4 @@
+.DS_Store
 .easyJupyter_cache
 model/saved_models
 model/checkpoints

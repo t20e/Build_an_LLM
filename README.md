@@ -1,6 +1,5 @@
 # How To Build An LLM
 
--# TODO make this its own repo
 -# TODO The Llama 1 and 2 are from different papers, anywhere in code where I have a link to the Llama 1 & 2 papers, fix it!
 
 #TODO make sure this renders in the github repo
