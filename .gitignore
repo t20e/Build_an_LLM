@@ -2,6 +2,7 @@
 .easyJupyter_cache
 model/saved_models
 model/checkpoints
+__pycache__
 
 
 *.bkp

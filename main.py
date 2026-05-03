@@ -1,12 +1,12 @@
 import EasyJupyter  # type: ignore
 import argparse
 import torch
-from llama_configs import Llama3_scaled_down, Llama3_8B, BaseConfig
+from llama_configs import Llama3_scaled_down, Llama3_8B
 from model.model_text_only import TextOnlyModel
 from model.utils.model_io import load_checkpoint
 from model.tokenizer import BPETokenizer
 from model.utils.data_loader import create_causal_dataloader, get_raw_dataset
-from model.pre_training import PreTrainingModel
+from model.pre_training import PreTrainModel
 from utils.fs_manager import resolve_checkpoint_path
 from model.utils.optimizer_and_scheduler import get_optimizer, get_scheduler
 
@@ -14,7 +14,7 @@ PHASES_MAP = {
     # Used with --phase flag
     "pretrain": {
         "chpt_dir": "Scaled_down_Llama_3_1_Base",
-        "trainer": PreTrainingModel,
+        "trainer": PreTrainModel,
         "model": TextOnlyModel,
         "tokenizer": BPETokenizer,
     },
@@ -140,5 +140,4 @@ if __name__ == "__main__":
         if not success:
             tokenizer = loaded_tokenizer.train_tokenizer(get_raw_dataset())
 
-        dataloader = create_causal_dataloader(cfg, loaded_tokenizer)
-        trainer.train(dataloader)
+        trainer.train(tokenizer)

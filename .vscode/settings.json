@@ -1,0 +1,18 @@
+{
+    "python.analysis.extraPaths": [
+        "./.easyJupyter_cache"
+    ],
+    "cSpell.words": [
+        "accum",
+        "allclose",
+        "CHPT",
+        "CHPTS",
+        "cosmopedia",
+        "fineweb",
+        "freqs",
+        "perc",
+        "Polyak",
+        "rtol",
+        "smollm"
+    ]
+}

@@ -115,7 +115,7 @@ Doc n: [ 88,  310, 500] # 500 represents "Ġgood"
                     <p>
                         <strong>Context Window:</strong> Note that the
                         DataLoader will slice the flat <strong>1D</strong> list so that it fits
-                        into the model's fixed context window length. For
+                        into the model's fixed context window length + 1. For
                         example context window = 8, the <strong>1D</strong> list would look like:
                     </p>
                     <pre
@@ -174,7 +174,13 @@ Doc n: [ 88,  310, 500] # 500 represents "Ġgood"
         [ 0.65,  0.43, ...,  0.34],      # Vector for "Ġwrite" (ID 440)
         [-0.23, -0.76, ..., -0.19],      # Vector for "Ġcode" (ID 990)
         [ 0.99,  0.88, ...,  0.11]       # Vector for <|end_of_doc|> (ID 2)
-    ]
+    ],
+    [
+        Another batch here...
+    ],
+    .
+    .
+    .
 ]
     </pre
                     >

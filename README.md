@@ -4,7 +4,7 @@
 
 #TODO make sure this renders in the github repo
 
-✨ This project is a guide to building a large language model like ChatGPT, Gemini, or Llama from scratch. I will build and train a scale down version of the Llama 3 architecture (Note: training a full model is very expensive!). Also, I will add options to import pre-trained Llama 3.1 models. I choose Llama over the Gemini and ChatGPT models because it is the most open-sourced and well-documented. Almost all LLMs are built on the Transformer-decoder architecture, with some minor tweaks.
+✨ This project is a guide to building a large language model like ChatGPT, Gemini, or Llama from scratch. I will build and train a scale down version of the Llama 3 architecture (Note: training a full model is very expensive!). Also, I will add options to import pre-trained Llama 3.1 models. I choose Llama over the Gemini and ChatGPT models because it is the most open-sourced and well-documented. Almost all LLMs are built on the Transformer-decoder architecture, with some minor tweaks. To build a full Llama 3 model, you would take my scaled-down config, increase some hyperparameters, adjust the tokenizer so that it is not a universal one, and change the datasets to larger ones.
 
 - There are two phases when training an LLM are: # TODO maybe add this info in a train notebook
   - Phase 1: You train a base model on a massive corpus of raw text using self-supervised learning, where its only objective is to predict the next token (e.g., the next word in a sentence). Here the model learns grammar, facts, and reasoning.
@@ -14,11 +14,13 @@
 
 - [Brendan Bycroft LLMs Visualization](https://bbycroft.net/llm)
 - [Andrej Karpathy's Deep Dive into LLMs video](https://www.youtube.com/watch?v=7xTGNNLPyMI)
-- [My Transformer project](https://github.com/t20e/AI_projects_and_res/tree/main/Transformer)
+- [My Transformer Project](https://github.com/t20e/AI_projects_and_res/tree/main/Transformer)
 
 **Goals:**
 
-- [x] Add and pre-process the [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. I will only use a small portion of the FineWeb-edu, which is ~5.84 TB, while the FineWeb is ~54.8 TB.
+- [x] Add and pre-process datasets:
+  - [x]  [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. I will only use a small portion of the FineWeb-edu, which is ~5.84 TB, while the FineWeb is ~54.8 TB. Used for the initial and long-context stages of the pre-training.
+  - [x]  [HuggingFaceTB/smollm-corpus](https://huggingface.co/datasets/HuggingFaceTB/smollm-corpus) used for the annealing stage of the pre-training.
 - [x] Implement Llama 3 architecture components.
   - [x] Build the [tokenizer](./model/tokenizer.ipynb).
   - [x] [RoPE](./model/RoPE.ipynb)
@@ -30,13 +32,14 @@
 - [ ] Build the training pipeline.
   - [ ] Pre-training
   - [ ] Post-training
+    - [ ] Supervised Fine-tuning (SFT)
+    - [ ] Direct Preference Optimization (DPO)
+- [ ] Train a scaled down model along with its tokenizer, that is feasible on my Mac.
+- [ ] Import a Pre-trained Llama model (e.g., Llama 3.1 8B) from HuggingFace to showcase a SOTA model working with my built-out architecture.
 - [ ] Implement Multi-modal so that the model works with:
   - [ ] Code
   - [ ] Speech
   - [ ] Vision
-- [ ] Train a scaled down model along with its tokenizer, that is feasible on my Mac.
-  - [ ] CANDEL. Make sure that things like special tokens match the larger Llama model! So I don't have two use different special tokens, and other things differently when I use my scaled down or full Llama model.
-- [ ] Import a Pre-trained Llama model (e.g., Llama 3.1 3B) from HuggingFace to showcase a SOTA model working with my built-out architecture.
 
 ## Llama 3 Architecture
 
