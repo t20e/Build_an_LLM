@@ -1,52 +1,78 @@
 import EasyJupyter  # type: ignore
 import argparse
-import torch
-from llama_configs import Llama3_scaled_down, Llama3_8B
+from llama_configs import Llama3_scaled_down, Llama3_8B, BaseConfig
 from model.model_text_only import TextOnlyModel
-from model.utils.model_io import load_checkpoint
-from model.tokenizer import BPETokenizer
-from model.utils.data_loader import create_causal_dataloader, get_raw_dataset
-from model.pre_training import PreTrainModel
+from model.pre_train_text_only import PreTrainTextOnly, setupPreTraining
 from utils.fs_manager import resolve_checkpoint_path
-from model.utils.optimizer_and_scheduler import get_optimizer, get_scheduler
+from utils.misc import print_args
 
-PHASES_MAP = {
-    # Used with --phase flag
-    "pretrain": {
-        "chpt_dir": "Scaled_down_Llama_3_1_Base",
-        "trainer": PreTrainModel,
-        "model": TextOnlyModel,
-        "tokenizer": BPETokenizer,
+MODELS_SUITE = {
+    "scaled_down_text": {
+        # 3.1 8b model
+        "config_cls": Llama3_scaled_down,
+        "model_cls": TextOnlyModel,
+        "is_multimodal": False,
+        "train_pipeline": {
+            "pretrain": {
+                "chpt_dir": "Scaled_down_Llama_3_1_Base",
+                "trainer": PreTrainTextOnly,
+                "suffix": "_Base",
+            },
+            "sft": {
+                "chpt_dir": "Scaled_down_Llama_3_1_SFT",
+                "suffix": "_SFT",
+                "trainer": None,
+            },
+            "dpo": {
+                "chpt_dir": "Scaled_down_Llama_3_1_Instruct",
+                "suffix": "_Instruct",
+                "trainer": None,
+            },
+        },
     },
-    "sft": {
-        "suffix": "_SFT",
-        "tokenizer": BPETokenizer,
-        "trainer": None,
-        "model": None,
-        "chpt_dir": "Scaled_down_Llama_3_1_SFT",
+    "scaled_down_multi": {
+        # Multi-model (Vision + text) 3.2 11b model
+        "config_cls": None,
+        "model_cls": None,
+        "is_multimodal": True,
+        "train_pipeline": {
+            "sft": {
+                "chpt_dir": "Scaled_down_Llama_3_11_multi_SFT",
+                "suffix": "_Multi_SFT",
+                "trainer": None,
+            },
+            "dpo": {
+                "chpt_dir": "Scaled_down_Llama_3_11_multi_Instruct",
+                "suffix": "_Multi_Instruct",
+                "trainer": None,
+            },
+        },
     },
-    "dpo": {
-        "suffix": "_Instruct",
-        "trainer": None,
-        "chpt_dir": "Scaled_down_Llama_3_1_Instruct",
+    # =======================================================================
+    # External Meta Trained models from HuggingFace (Inference only)
+    # =======================================================================
+    "3.1_8b": {
+        "config_cls": Llama3_8B,
+        "model_cls": None,
+        "is_multimodal": False,
     },
-}
-
-CONFIG_MAP = {
-    # Used with --model flag
-    "scaled_down": Llama3_scaled_down,
-    "3_8b": Llama3_8B,
-    # Add more configs here
+    "3.2_11b_multi": {
+        "config_cls": None,
+        "model_cls": None,
+        "is_multimodal": True,
+    },
 }
 
 
 if __name__ == "__main__":
-
-    # Scenario 1: Phase Transition (e.g., from pre-training to post-training SFT, or from SFT to DPO)
-    #   - Only load the model's weights
-    #   - Things like learning rate can be different.
-    # Scenario 2: Continue Training in the same phase.
-    #   - Load the model's weights and optimizer, and scheduler.
+    """
+    Scenario 1: Phase Transition (i.e., from pre-training to post-training SFT, or from SFT to DPO)
+      - Only load the model's weights
+      - Things like learning rate can be different.
+    Scenario 2: Continue Training in the same phase.
+      - Load the model's weights and optimizer, and scheduler.
+    Scenario 3: Inference on either my trained model, or one from HuggingFace.
+    """
 
     parser = argparse.ArgumentParser(description="Llama 3 Training/Inference CLI.")
     parser.add_argument(
@@ -57,21 +83,16 @@ if __name__ == "__main__":
         required=True,
     )
 
+    parser.add_argument("--model", type=str, default="scaled_down_text")
     parser.add_argument(
-        "--model",
-        choices=CONFIG_MAP.keys(),
-        default="scaled_down",
-        help="The model configuration to use.",
-    )
-    parser.add_argument(
-        "--from_phase",
-        choices=["pretrain", "sft", "dpo"],
-        help="Source phase directory to load weights from. If not provided, will use the current phase.",
+        "--transition",
+        action="store_true",
+        help="Transition to the next phase, only load the checkpoint's weights (no optimizer/scheduler) from the previous phase.",
     )
     parser.add_argument(
         "--checkpoint",
         type=str,
-        help="Specific step file to load. e.g., step_001000.pt",
+        help="Specific step file to load. e.g., step_001000.pt. Defaults to latest.txt",
     )
 
     parser.add_argument(
@@ -79,65 +100,82 @@ if __name__ == "__main__":
         action="store_true",
     )
 
-    # ---------- Parse and validate the arguments ----------
     args = parser.parse_args()
-    cfg = CONFIG_MAP[args.model]()
+    print_args(args)
+    if args.model not in MODELS_SUITE:
+        raise ValueError(f"Model {args.model} not recognized!")
 
-    model = PHASES_MAP[args.phase]["model"](cfg).to(cfg.device)
+    if (
+        args.model == "3.2_11b_multi"
+        or args.model == "3.1_8b"
+        and args.phase != "inference"
+    ):
+        raise ValueError(
+            f"Models 3.2_11b_multi and 3.1_8b are only supported for inference!"
+        )
 
-    checkpoint_path, is_transition, new_save_path = resolve_checkpoint_path(
-        cfg, args, PHASES_MAP
-    )
-    cfg.CURR_CHPT_DIR = new_save_path
+    if args.model == "scaled_down_text":
+        checkpoint_path, is_transition, new_chpt_save_path = resolve_checkpoint_path(
+            BaseConfig, args, MODELS_SUITE["scaled_down_text"]["train_pipeline"]
+        )
+    elif args.model == "scaled_down_multi":
+        checkpoint_path, is_transition, new_chpt_save_path = resolve_checkpoint_path(
+            BaseConfig, args, MODELS_SUITE["scaled_down_multi"]["train_pipeline"]
+        )
+
+    if is_transition or checkpoint_path is not None:
+        # Continue training, load from the config.json
+        cfg = MODELS_SUITE[args.model]["config_cls"].load_from_json(
+            checkpoint_path.parent / "config.json"
+        )
+        print(cfg)
+    else:
+        # Start fresh in pretrain phase
+        cfg = MODELS_SUITE[args.model]["config_cls"]()
+        print(cfg)
+
+    cfg.CURR_CHPT_DIR = new_chpt_save_path
+    model = MODELS_SUITE[args.model]["model_cls"](cfg).to(cfg.device)
 
     if args.dry_run:
         print("\n------------ Dry Run ------------")
-        cfg.gradient_accumulation_steps = 1
-        cfg.token_budget = 1 * cfg.global_batch_size_tokens
         cfg.CURR_CHPT_DIR = cfg.CHPTS_DIR / "Scaled_down_Llama_3_1_DRY_RUN"
         cfg.CURR_CHPT_DIR.mkdir(parents=True, exist_ok=True)
 
     if args.phase == "inference":
         print("\n-------- Running inference... --------")
-        load_checkpoint(cfg, model, checkpoint_path)
+        # TODO: For inference, we need to use save tensors
         print("-" * 64)
         print(cfg)
         print("-" * 64)
-    else:
-        TrainerClass = PHASES_MAP[args.phase]["trainer"]
-        if not TrainerClass:
-            print(f"Trainer for {args.phase} not implemented yet.")
-            exit(1)
 
-        optimizer = get_optimizer(cfg, model)
-        scheduler = get_scheduler(cfg, optimizer=optimizer)
-        # Instantiate the trainer with its default optimizer and scheduler. If we are continuing from a checkpoint, we will update them to that of the saved checkpoint's.
-        trainer = TrainerClass(cfg, model, optimizer=optimizer, scheduler=scheduler)
+    else:  # === Train ===
+        # load_chpt = True if args.checkpoint else False
 
-        if checkpoint_path:
-            cfg.load_config_from_json(checkpoint_path.parent / "config.json")
-            cfg.CURR_CHPT_DIR = new_save_path  # Paths are not saved to config.json, to allow moving from one system to another, so set the save path here.
-            print("\nWill save the new model to", new_save_path)
+        if args.phase == "pretrain":
+            if args.model == "scaled_down_text":
+                trainer = setupPreTraining(
+                    cfg=cfg,
+                    model=model,
+                    chpt_path=checkpoint_path,
+                    is_transition=is_transition,
+                    is_dry_run=args.dry_run,
+                )
+                trainer.train(is_dry_run=args.dry_run)
+            elif args.model == "scaled_down_multi":
+                raise NotImplementedError(
+                    "Multi-modal pre-training not yet implemented!"
+                )
+        elif args.phase == "sft":
+            if args.model == "scaled_down_text":
+                raise NotImplementedError("Text-only SFT not yet implemented!")
+            elif args.model == "scaled_down_multi":
+                raise NotImplementedError("Multi-modal SFT not yet implemented!")
 
-            # Check if we have to load the optimizer and scheduler from the checkpoint, if we are transitioning we will only load the model's weights, and not its optimizer and scheduler.
-            load_opt = None if is_transition else trainer.optimizer
-            load_sch = None if is_transition else trainer.scheduler
-
-            load_checkpoint(
-                cfg=cfg,
-                model=model,
-                chpt_path=checkpoint_path,
-                optimizer=load_opt,
-                scheduler=load_sch,
-            )
-
-        print("-" * 64)
-        print(cfg)
-        print("-" * 64)
-        print(f"\n-------- Starting {args.phase.upper()} Phase... --------")
-        tokenizer = PHASES_MAP[args.phase]["tokenizer"](cfg)
-        success, loaded_tokenizer = tokenizer.load_tokenizer()
-        if not success:
-            tokenizer = loaded_tokenizer.train_tokenizer(get_raw_dataset())
-
-        trainer.train(tokenizer)
+        elif args.phase == "dpo":
+            if args.model == "scaled_down_text":
+                raise NotImplementedError("Text-only DPO not yet implemented!")
+            elif args.model == "scaled_down_multi":
+                raise NotImplementedError("Multi-modal DPO not yet implemented!")
+        else:
+            raise ValueError(f"Phase {args.phase} not recognized!")

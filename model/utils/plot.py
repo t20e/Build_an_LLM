@@ -38,7 +38,7 @@ def plot_loss_history(loss_history, cfg: BaseConfig, step_counter: int):
     config_info = (
         f"Model: d_model={cfg.d_model}, N={cfg.num_layers}, h ={cfg.attn_heads}, d_ff={cfg.d_ff}\n"
         f"Training: vocab_size={cfg.vocab_size}, total_training_steps={cfg.total_training_steps},"
-        f"num_workers={cfg.num_workers}, warmup_steps={cfg.warmup_steps},\n" #TODO any any more new hyperparameters
+        f"num_workers={cfg.num_workers}, warmup_steps={cfg.warmup_steps},\n"  # TODO any any more new hyperparameters
     )
 
     # Place config info at bottom of plot
@@ -53,9 +53,11 @@ def plot_loss_history(loss_history, cfg: BaseConfig, step_counter: int):
     )
     plt.tight_layout(rect=[0, 0.10, 1, 1])
 
-    plot_img_path = cfg.CURR_CHPT_DIR / f"step_{step_counter:06d}_training_loss_plot.png"
-
+    plot_img_path = (
+        cfg.CURR_CHPT_DIR / f"step_{step_counter:06d}_training_loss_plot.png"
+    )
 
     plt.savefig(plot_img_path)
     print(f"Loss plot saved to {plot_img_path}")
-    plt.close()
+    # plt.close()
+    plt.show()

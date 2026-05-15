@@ -1,6 +1,9 @@
 # How To Build An LLM
 
--# TODO The Llama 1 and 2 are from different papers, anywhere in code where I have a link to the Llama 1 & 2 papers, fix it!
+**#TODO:**
+
+- [ ] The Llama 1 and 2 are from different papers, anywhere in code where I have a link to the Llama 1 & 2 papers, fix it!
+- [ ] Rename the project from `How_to_build_an_LLM` to `Build_an_LLM`
 
 #TODO make sure this renders in the github repo
 
@@ -19,8 +22,8 @@
 **Goals:**
 
 - [x] Add and pre-process datasets:
-  - [x]  [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. I will only use a small portion of the FineWeb-edu, which is ~5.84 TB, while the FineWeb is ~54.8 TB. Used for the initial and long-context stages of the pre-training.
-  - [x]  [HuggingFaceTB/smollm-corpus](https://huggingface.co/datasets/HuggingFaceTB/smollm-corpus) used for the annealing stage of the pre-training.
+  - [x] [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) `10BT` subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. The stream will be capped to the `token_budget` of the scaled down config. This dataset is used for the initial and long-context stages of the pre-training.
+  - [x] [HuggingFaceFW/finepdfs](https://huggingface.co/datasets/HuggingFaceFW/finepdfs) used for the annealing stage of the pre-training.
 - [x] Implement Llama 3 architecture components.
   - [x] Build the [tokenizer](./model/tokenizer.ipynb).
   - [x] [RoPE](./model/RoPE.ipynb)
@@ -57,9 +60,38 @@ The Llama architecture was first described in [LlaMA: Open and Efficient Foundat
    1. Of which $100\text{K}$ is from the **tiktoken** library, and the other $28\text{K}$ is additional tokens to better support non-English languages.
 4. Increased the **RoPE** base frequency hyperparameter to $500{,}000$
 
+## Getting Started
 
-**#TODOs:**
+**Create the Environment:**
 
-- [ ] Add info of the Transformers decoder
-- [ ] Explain the differences between how chatgpt and gemini are implemented.
-- [ ] Add papers from GoodNotes into ./papers
+```bash
+    #TODO
+```
+
+> [!NOTE]
+> [Optional] Enable higher download speeds from HuggingFace by logging in using their CLI:
+>
+> 1. Create an access token at [HuggingFace Tokens](https://huggingface.co/settings/tokens) and set `Token type` to `read` only.
+> 1. Login to the HuggingFace CLI:
+>
+>    ```bash
+>    hf auth login
+>    # Enter your token and press enter
+>    # Enter `n` for git credentials question.
+>    ```
+
+### How To Run Inference On My Scaled Down Models
+
+- #TODO
+
+### How To Train
+
+**Build The Pre-Training Dataset:**
+
+```bash
+# TODO edit time it took!
+# Took ~45 mins to run with ~862.8 Mbps download speeds & file sizes ~4GB for the scaled down config.
+time caffeinate -d python prepare_data.py --d pretrain 
+```
+
+- #TODO

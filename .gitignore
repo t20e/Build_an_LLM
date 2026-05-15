@@ -3,6 +3,7 @@
 model/saved_models
 model/checkpoints
 __pycache__
+data
 
 
 *.bkp

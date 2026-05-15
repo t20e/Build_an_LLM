@@ -1,39 +1,55 @@
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from llama_configs import BaseConfig
 
 
-def resolve_checkpoint_path(cfg: BaseConfig, args, PHASE_MAP):
+def resolve_checkpoint_path(cfg: BaseConfig, args, PHASES_CONFIG):
     """
     Returns
-        full_checkpoint_path: based on the --from_phase flag,
-        is_transition (bool): if the checkpoint is from a different phase
-        new_save_path (str): The path of the new location to save models to, e.g., if we go from SFT to DPO, the new_save_path will be to the location that has DPO models
+        chpt_path: Full path to the .pt file, or None for a fresh pretrain start.
+        is_transition (bool): If the checkpoint is from a different phase.
+        save_path (str): Directory to save checkpoints for this run.
     """
 
+    pipeline = list(PHASES_CONFIG.keys())
+
+    if args.phase not in pipeline:
+        raise ValueError(
+            f"Model {args.model} does not support phase {args.phase}.\nIts pipeline is: {pipeline}"
+        )
+
     # Determine which checkpoint directory we will be working in
-    new_save_path = cfg.CHPTS_DIR / PHASE_MAP[args.phase]["chpt_dir"]
-    new_save_path.mkdir(parents=True, exist_ok=True)
+    save_path = cfg.CHPTS_DIR / PHASES_CONFIG[args.phase]["chpt_dir"]
+    save_path.mkdir(parents=True, exist_ok=True)
 
-    # Determine from which config directory the checkpoint from, either from another phase, or continue training from the same phase
-    # if --from_phase is provided, we are transitioning, otherwise we are continuing training in the same phase
-    source_phase = args.from_phase if args.from_phase else args.phase
-    source_dir = cfg.CHPTS_DIR / PHASE_MAP[source_phase]["chpt_dir"]
+    if args.transition:
+        phase_idx = pipeline.index(args.phase)
+        if phase_idx == 0:
+            raise ValueError(
+                f"Cannot transition into '{args.phase}', as its the first phase."
+            )
+        source_phase = pipeline[phase_idx - 1]
+        is_transition = True
+    else:
+        source_phase = args.phase
+        is_transition = False
 
-    is_transition = (args.from_phase is not None) and (args.from_phase != args.phase)
-
+    source_dir = cfg.CHPTS_DIR / PHASES_CONFIG[source_phase]["chpt_dir"]
     checkpoint_file = args.checkpoint
-    if (
-        not checkpoint_file
-    ):  # If the checkpoint was not provide, get from the latest.txt
+
+    if not checkpoint_file:
+        # If the checkpoint was not provide, get from the latest.txt
         latest_file = source_dir / "latest.txt"
+
         if latest_file.exists():
             checkpoint_file = latest_file.read_text().strip()
-        elif args.phase == "pretrain" and not is_transition:
-            # Start fresh in pretrain phase
-            return None, False, new_save_path
+        elif not is_transition and source_phase == pipeline[0]:
+            # No checkpoint found in the first phase, begin a fresh start
+            return None, False, save_path
         else:
             raise FileNotFoundError(
                 f"No checkpoint or latest.txt found in {source_dir}."
             )
-    return (source_dir / checkpoint_file), is_transition, new_save_path
+
+    return (source_dir / checkpoint_file), is_transition, save_path

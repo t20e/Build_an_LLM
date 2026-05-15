@@ -6,7 +6,6 @@ import torch
 
 if TYPE_CHECKING:
     from llama_configs import BaseConfig
-    from model.pre_training import PreTrainModel
     from model.decoder import Decoder
 
 
@@ -40,7 +39,7 @@ def save_checkpoint(
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
             "scheduler_state_dict": scheduler.state_dict(),
-            "loss_history": loss_history,
+            "loss_history": loss_history, # NOTE: Loss history can get very large, consider capping it or savings it in its own JSON fle, and keeping only the last N values.
             "avg_loss": avg_loss,
         },
         save_path,
@@ -53,13 +52,13 @@ def save_checkpoint(
     print(f"Saved Checkpoint to -> {save_path}")
 
 
-def load_checkpoint( 
-        cfg: BaseConfig,
-        model: torch.nn.Module,
-        chpt_path: Path,
-        optimizer: torch.optim.Optimizer = None,
-        scheduler: torch.optim.lr_scheduler.LambdaLR = None,
-        ):
+def load_checkpoint(
+    cfg: BaseConfig,
+    model: torch.nn.Module,
+    chpt_path: Path,
+    optimizer: torch.optim.Optimizer = None,
+    scheduler: torch.optim.lr_scheduler.LambdaLR = None,
+):
     """
     Load a checkpoint. If optimizer and scheduler are provided, their states are also loaded.
 
@@ -67,26 +66,29 @@ def load_checkpoint(
         chpt_path: Direct path to the checkpoint file.
     """
     if not chpt_path.exists():
-        print(f"Error: No checkpoint found at: {chpt_path}")
-        return
-    
+        raise FileNotFoundError(f"No checkpoint found at: {chpt_path}")
+
     print(f"Loading checkpoint at: {chpt_path}...")
     checkpoint = torch.load(chpt_path, map_location=cfg.device, weights_only=True)
 
-    model.load_state_dict(checkpoint["model_state_dict"]) # weights
+    model.load_state_dict(checkpoint["model_state_dict"])  # weights
 
     # Only load the optimizer and scheduler, when continuing training
-    if optimizer and "optimizer_state_dict" in checkpoint:
+    if optimizer is not None and "optimizer_state_dict" in checkpoint:
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
-        # MPS device bug issue, fix by moving optimizer state tensors to mps device
-        for state in optimizer.state.values():
-            for k, v in state.items():
-                if isinstance(v, torch.Tensor):
-                    state[k] = v.to(cfg.device)
+        if cfg.device == "mps":
+            # MPS device bug issue, fix by moving optimizer state tensors to mps device
+            for state in optimizer.state.values():
+                for k, v in state.items():
+                    if isinstance(v, torch.Tensor):
+                        state[k] = v.to(cfg.device)
 
-    if scheduler and "scheduler_state_dict" in checkpoint:
+    if scheduler is not None and "scheduler_state_dict" in checkpoint:
         scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
 
     cfg.step_counter = checkpoint.get("step_counter", 0)
-    print(f"Successfully loaded checkpoint: {chpt_path.name} (Step: {cfg.step_counter})")
+
+    print(
+        f"Successfully loaded checkpoint: {chpt_path.name} (Step: {cfg.step_counter})"
+    )

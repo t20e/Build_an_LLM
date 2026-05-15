@@ -5,14 +5,26 @@
     "cSpell.words": [
         "accum",
         "allclose",
+        "caffeinate",
         "CHPT",
         "CHPTS",
         "cosmopedia",
         "fineweb",
         "freqs",
+        "Mbps",
+        "memmap",
+        "multimodal",
+        "pbar",
         "perc",
+        "percs",
         "Polyak",
+        "pretrain",
+        "pretrained",
         "rtol",
-        "smollm"
-    ]
+        "smollm",
+        "tofile"
+    ],
+    // "search.exclude": {
+    //     "**/.easyJupyter_cache/**": true
+    // }
 }
