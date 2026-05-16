@@ -3,21 +3,24 @@
 **#TODO:**
 
 - [ ] The Llama 1 and 2 are from different papers, anywhere in code where I have a link to the Llama 1 & 2 papers, fix it!
-- [ ] Rename the project from `How_to_build_an_LLM` to `Build_an_LLM`
+
 
 #TODO make sure this renders in the github repo
 
 ✨ This project is a guide to building a large language model like ChatGPT, Gemini, or Llama from scratch. I will build and train a scale down version of the Llama 3 architecture (Note: training a full model is very expensive!). Also, I will add options to import pre-trained Llama 3.1 models. I choose Llama over the Gemini and ChatGPT models because it is the most open-sourced and well-documented. Almost all LLMs are built on the Transformer-decoder architecture, with some minor tweaks. To build a full Llama 3 model, you would take my scaled-down config, increase some hyperparameters, adjust the tokenizer so that it is not a universal one, and change the datasets to larger ones.
 
-- There are two phases when training an LLM are: # TODO maybe add this info in a train notebook
+- Training an LLM phases:
   - Phase 1: You train a base model on a massive corpus of raw text using self-supervised learning, where its only objective is to predict the next token (e.g., the next word in a sentence). Here the model learns grammar, facts, and reasoning.
   - Phase 2: You take the base model and train it to become a chat/assistant model.This is done by applying fine tuning using structured conversational data (Prompt/Response pairs), which is often followed by Reinforcement Learning from Human Feedback or direct preference optimization to force the model to behave an assistant.
+  - Multi-modality (i.e., model can work with text + vision, etc...): To make the model multi-modal, you freeze the weights of the base model, add a cross-attention layer to its decoder, and connected an encoder (which processes the vision input) to that cross-attention n layer of the decoder.
 
 **Useful Links:**
 
-- [Brendan Bycroft LLMs Visualization](https://bbycroft.net/llm)
 - [Andrej Karpathy's Deep Dive into LLMs video](https://www.youtube.com/watch?v=7xTGNNLPyMI)
+- [Brendan Bycroft LLMs Visualization](https://bbycroft.net/llm)
 - [My Transformer Project](https://github.com/t20e/AI_projects_and_res/tree/main/Transformer)
+- [Llama 3 Paper](https://arxiv.org/abs/2407.21783) | [Llama 2 Paper](https://arxiv.org/abs/2307.09288) | [Llama 1 Paper](https://arxiv.org/abs/2302.13971)
+
 
 **Goals:**
 
@@ -34,7 +37,7 @@
   - [x] The transformer [decoder](./model/decoder.ipynb)
 - [ ] Build the training pipeline.
   - [ ] Pre-training
-  - [ ] Post-training
+  - [ ] Post-training:
     - [ ] Supervised Fine-tuning (SFT)
     - [ ] Direct Preference Optimization (DPO)
 - [ ] Train a scaled down model along with its tokenizer, that is feasible on my Mac.
@@ -52,10 +55,10 @@
 
 The fundamental block of an LLM is the **Transformer Decoder**. Most modern frontier LLMs modify the decoder by adding a **RMSNorm**, **RoPE**, and **GQA** sub-layer. There are other variations, for example the [Google Gemma model](https://developers.googleblog.com/gemma-explained-new-in-gemma-2/#:~:text=the%20new%20models%3A-,Key%20Differences,-Gemma%202%20shares) has **GeGLU** non-linearity.
 
-The Llama architecture was first described in [LlaMA: Open and Efficient Foundation Language Models](https://arxiv.org/pdf/2302.13971), which is Llama 1. The Llama 3 which is described in this paper: [The Llama 3 Herd of Models](https://arxiv.org/pdf/2407.21783), made a few modifications such as:
+The Llama 3 architecture made the following modifications to the prior models:
 
-1. Adding **GQA Attention** with $\mathbf{8}$ key-value heads.
-2. Used an attention mask that prevents self-attention between different documents withing the same sequence.
+1. Added **GQA Attention** with $\mathbf{8}$ key-value heads.
+2. Used an attention mask that prevents self-attention between different documents within the same sequence.
 3. Used a vocabulary with $128\text{K}$ total tokens.
    1. Of which $100\text{K}$ is from the **tiktoken** library, and the other $28\text{K}$ is additional tokens to better support non-English languages.
 4. Increased the **RoPE** base frequency hyperparameter to $500{,}000$
@@ -69,7 +72,7 @@ The Llama architecture was first described in [LlaMA: Open and Efficient Foundat
 ```
 
 > [!NOTE]
-> [Optional] Enable higher download speeds from HuggingFace by logging in using their CLI:
+> [Optional] Enable higher download speeds from HuggingFace by logging in to their CLI:
 >
 > 1. Create an access token at [HuggingFace Tokens](https://huggingface.co/settings/tokens) and set `Token type` to `read` only.
 > 1. Login to the HuggingFace CLI:

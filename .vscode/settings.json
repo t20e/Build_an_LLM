@@ -5,12 +5,15 @@
     "cSpell.words": [
         "accum",
         "allclose",
+        "Andrej",
+        "Bycroft",
         "caffeinate",
         "CHPT",
         "CHPTS",
         "cosmopedia",
         "fineweb",
         "freqs",
+        "Karpathy's",
         "Mbps",
         "memmap",
         "multimodal",
@@ -22,9 +25,10 @@
         "pretrained",
         "rtol",
         "smollm",
+        "tiktoken",
         "tofile"
     ],
-    // "search.exclude": {
-    //     "**/.easyJupyter_cache/**": true
-    // }
+    "search.exclude": {
+        "**/.easyJupyter_cache/**": true
+    }
 }
