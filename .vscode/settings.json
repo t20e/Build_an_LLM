@@ -11,6 +11,7 @@
         "CHPT",
         "CHPTS",
         "cosmopedia",
+        "easyjupyter",
         "fineweb",
         "freqs",
         "Karpathy's",
@@ -30,5 +31,7 @@
     ],
     "search.exclude": {
         "**/.easyJupyter_cache/**": true
-    }
+    },
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda"
 }

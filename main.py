@@ -1,4 +1,4 @@
-import EasyJupyter  # type: ignore
+import easyjupyter  # type: ignore
 import argparse
 from llama_configs import Llama3_scaled_down, Llama3_8B, BaseConfig
 from model.model_text_only import TextOnlyModel
@@ -8,7 +8,7 @@ from utils.misc import print_args
 
 MODELS_SUITE = {
     "scaled_down_text": {
-        # 3.1 8b model
+        # 3.1 8b text-only model
         "config_cls": Llama3_scaled_down,
         "model_cls": TextOnlyModel,
         "is_multimodal": False,
@@ -150,8 +150,6 @@ if __name__ == "__main__":
         print("-" * 64)
 
     else:  # === Train ===
-        # load_chpt = True if args.checkpoint else False
-
         if args.phase == "pretrain":
             if args.model == "scaled_down_text":
                 trainer = setupPreTraining(

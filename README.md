@@ -1,18 +1,18 @@
 # How To Build An LLM
 
-**#TODO:**
-
-- [ ] The Llama 1 and 2 are from different papers, anywhere in code where I have a link to the Llama 1 & 2 papers, fix it!
-
-
-#TODO make sure this renders in the github repo
+- [ ] #TODO make sure this renders in the github repo
+- [ ] TODO: Move training to the cloud.
 
 ✨ This project is a guide to building a large language model like ChatGPT, Gemini, or Llama from scratch. I will build and train a scale down version of the Llama 3 architecture (Note: training a full model is very expensive!). Also, I will add options to import pre-trained Llama 3.1 models. I choose Llama over the Gemini and ChatGPT models because it is the most open-sourced and well-documented. Almost all LLMs are built on the Transformer-decoder architecture, with some minor tweaks. To build a full Llama 3 model, you would take my scaled-down config, increase some hyperparameters, adjust the tokenizer so that it is not a universal one, and change the datasets to larger ones.
 
+- TODO: Review after completing the multi-modal.
 - Training an LLM phases:
-  - Phase 1: You train a base model on a massive corpus of raw text using self-supervised learning, where its only objective is to predict the next token (e.g., the next word in a sentence). Here the model learns grammar, facts, and reasoning.
-  - Phase 2: You take the base model and train it to become a chat/assistant model.This is done by applying fine tuning using structured conversational data (Prompt/Response pairs), which is often followed by Reinforcement Learning from Human Feedback or direct preference optimization to force the model to behave an assistant.
-  - Multi-modality (i.e., model can work with text + vision, etc...): To make the model multi-modal, you freeze the weights of the base model, add a cross-attention layer to its decoder, and connected an encoder (which processes the vision input) to that cross-attention n layer of the decoder.
+  - Phase 1 (Pre-train): You train a base model on a massive corpus of raw text using self-supervised learning, where its only objective is to predict the next token (e.g., the next word in a sentence). Here the model learns grammar, facts, and reasoning.
+  - Phase 2 (Post-train): You take the base model and train it to become a chat/assistant model. This is done by applying fine tuning using structured conversational data (Prompt/Response pairs), which is often followed by Reinforcement Learning from Human Feedback or direct preference optimization to force the model to behave an assistant. This model is called the Instruct model.
+  - Multi-modality (i.e., model can work with text + vision, etc...): Llama 3 multi-modal implementation:
+    - Add a frozen Vision Encoder (like a ViT) to process images into visual tokens.
+    - The vision tokens are fed as the KEY and VALUES into the new cross-attention layers inside the decoder. The next tokens provided the Queries.
+    - How its trained: During the multi-modal pre-training, the core self-attention weights of the text layers of the decoder remain frozen, but the new cross-attention layers are trained alongside an adapter network to align visual concepts with textual concepts
 
 **Useful Links:**
 
@@ -20,7 +20,6 @@
 - [Brendan Bycroft LLMs Visualization](https://bbycroft.net/llm)
 - [My Transformer Project](https://github.com/t20e/AI_projects_and_res/tree/main/Transformer)
 - [Llama 3 Paper](https://arxiv.org/abs/2407.21783) | [Llama 2 Paper](https://arxiv.org/abs/2307.09288) | [Llama 1 Paper](https://arxiv.org/abs/2302.13971)
-
 
 **Goals:**
 
@@ -40,11 +39,9 @@
   - [ ] Post-training:
     - [ ] Supervised Fine-tuning (SFT)
     - [ ] Direct Preference Optimization (DPO)
-- [ ] Train a scaled down model along with its tokenizer, that is feasible on my Mac.
+- [ ] Train a scaled down model.
 - [ ] Import a Pre-trained Llama model (e.g., Llama 3.1 8B) from HuggingFace to showcase a SOTA model working with my built-out architecture.
 - [ ] Implement Multi-modal so that the model works with:
-  - [ ] Code
-  - [ ] Speech
   - [ ] Vision
 
 ## Llama 3 Architecture
@@ -92,9 +89,7 @@ The Llama 3 architecture made the following modifications to the prior models:
 **Build The Pre-Training Dataset:**
 
 ```bash
-# TODO edit time it took!
-# Took ~45 mins to run with ~862.8 Mbps download speeds & file sizes ~4GB for the scaled down config.
-time caffeinate -d python prepare_data.py --d pretrain 
+time caffeinate -ism python prepare.py --d pretrain 
 ```
 
 - #TODO
