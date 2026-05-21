@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from configs import BaseConfig
 
+
 def get_device() -> torch.device:
     if torch.cuda.is_available():
         return torch.device("cuda")
@@ -14,15 +15,25 @@ def get_device() -> torch.device:
         return torch.device("cpu")
 
 
+def get_num_workers() -> int:
+    # 🚨 NOTE: For NVIDIA GPUs the Golden Rule is: num_worker = 4 * num_GPU | On Mac Silicone even though I have a 32 core GPU, it is still only one GPU, best to set num_workers = 0.
+    if torch.cuda.is_available():
+        return torch.cuda.device_count() * 4
+    else:
+        # MPS (Mac Silicon GPUs) and if you are just using CPU instead of a GPU
+        return 0
+
+
 def print_args(args):
     print("\n\n--------- Arguments ----------")
     for arg, val in vars(args).items():
         print(f"{arg}: {val}")
     print("--------- End Arguments ----------\n")
 
+
 # TODO finish and correct the print attributes
-def print_config(cfg:BaseConfig) -> str:
-        return f"""\n\n{'='*20} Config {'='*20}
+def print_config(cfg: BaseConfig) -> str:
+    return f"""\n\n{'='*20} Config {'='*20}
             [Model Architecture]
                 - model_name               = {cfg.model_name}
                 - d_model                  = {cfg.d_model}
@@ -35,7 +46,7 @@ def print_config(cfg:BaseConfig) -> str:
                 - vocab_size               = {cfg.vocab_size}
             \n
             [Active Run]
-                - Runtime [context_len]    = {cfg.context_len}
+                - Runtime [seq_len]    = {cfg.seq_len}
                 - num_workers              = {cfg.num_workers}
                 - device                   = {cfg.device}
                 - step_counter             = {cfg.step_counter}

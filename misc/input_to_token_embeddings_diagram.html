@@ -151,9 +151,9 @@ Doc n: [ 88,  310, 500] # 500 represents "Ġgood"
                     Token Embeddings
                 </h4>
                 <div style="font-size: 13px; color: #444">
-                    The dataloader stacks the <strong>1D</strong> token lists into a <strong>2D</strong> tensor (batch_size, context_len).
+                    The dataloader stacks the <strong>1D</strong> token lists into a <strong>2D</strong> tensor (batch_size, seq_len).
 
-                    The Token Embedding layer then replaces each integer with a contiguous vector, expanding it into a <strong>3D</strong> tensor of shape (batch_size, context_len, d_model).
+                    The Token Embedding layer then replaces each integer with a contiguous vector, expanding it into a <strong>3D</strong> tensor of shape (batch_size, seq_len, d_model).
                     <pre
                         style="
                             background: #fff0fb;

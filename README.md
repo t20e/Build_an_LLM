@@ -1,15 +1,26 @@
 # How To Build An LLM
 
-- [ ] #TODO make sure this renders in the github repo
-- [ ] TODO: Move training to the cloud.
+-#TODO make sure this renders in the github repo
 
-✨ This project is a guide to building a large language model like ChatGPT, Gemini, or Llama from scratch. I will build and train a scale down version of the Llama 3 architecture (Note: training a full model is very expensive!). Also, I will add options to import pre-trained Llama 3.1 models. I choose Llama over the Gemini and ChatGPT models because it is the most open-sourced and well-documented. Almost all LLMs are built on the Transformer-decoder architecture, with some minor tweaks. 
+-#TODO: Move training to the cloud.
 
-- Training an LLM phases:
-  - Phase 1 (Pre-train): You train a base model on a massive corpus of raw text using self-supervised learning, where its only objective is to predict the next token (e.g., the next word in a sentence). Here the model learns grammar, facts, and reasoning.
-  - Phase 2 (Post-train): You take the base model and train it to become a chat/assistant model. This is done by applying fine tuning using structured conversational data (Prompt/Response pairs), which is often followed by Reinforcement Learning from Human Feedback or direct preference optimization to force the model to behave an assistant. This model is called the Instruct model.
-  - Multi-modality (i.e., model can work with text + vision, etc...): Llama 3 multi-modal implementation:
-    - Llama 3 adds an encoder for vision.
+✨ This project is a guide to building a large language model like ChatGPT, Gemini, or Llama from scratch. I will build and train a scale down version of the Llama 3 architecture. Also, I will add options to import the pre-trained Llama 3 models. I choose Llama over the Gemini and ChatGPT models because it is the most open-sourced and well-documented. Almost all LLMs are built on the Transformer-decoder architecture, with some minor tweaks.
+
+**What if you want to train a full scale model:**
+
+✨ There are many methods that I did not implement that are worth looking into if you do plan on training on a massive dataset, like the 15.6T tokens that Llama used. Here are some:
+
+1. Since all the datasets for my scaled-down model will be very small compared to the 15.6T dataset, I decided to store each dataset into a large binary file. For a dataset with 15.6T tokens, you will instead want to implement sharding where each dataset is split into binary shards.
+2. You will likely need a different dataset that I am using! I use FineWeb-edu, PG19, FinePdfs, (#TODO the other datasets i will use)
+   1. The PG19 dataset contains long sequences that the long-context stage of pre-training requires, but its size is only 7.06GB, so for a full scaled model you will need more sequences than the PG19 contains.
+3. TODO add more
+
+**Training an LLM Phases:**
+
+- Phase 1 (Pre-train): You train a base model on a massive corpus of raw text using self-supervised learning, where its only objective is to predict the next token (e.g., the next word in a sentence). Here the model learns grammar, facts, and reasoning.
+- Phase 2 (Post-train): You take the base model and train it to become a chat/assistant model. This is done by applying fine tuning using structured conversational data (Prompt/Response pairs), which is often followed by Reinforcement Learning from Human Feedback or direct preference optimization to force the model to behave an assistant. This model is called the Instruct model.
+- Multi-modality (i.e., model can work with text + vision, etc...): Llama 3 multi-modal implementation:
+  - Llama 3 adds an encoder for vision.
 
 **Useful Links:**
 
@@ -23,7 +34,8 @@
 - [x] Add and pre-process datasets:
   - Note: The Llama 3 models were trained on a different datasets than the ones I will be using!
   - [Text-Only model pertaining datasets](./prep/prepare_pretrained.py):
-    - [x] [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) `10BT` subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. This dataset is used for the initial and long-context stages.
+    - [x] [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) 10BT subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. This dataset is used for the initial stage.
+    - [x] [PG19](https://huggingface.co/datasets/emozilla/pg19) used for the long-context stage. I needed a dataset that contains long sequences for this stage.
     - [x] [HuggingFaceFW/finepdfs](https://huggingface.co/datasets/HuggingFaceFW/finepdfs) used for the annealing stage.
 - [x] Implement Llama 3 architecture components.
   - [x] Build the [tokenizer](./model/tokenizer.ipynb).

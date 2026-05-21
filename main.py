@@ -2,9 +2,10 @@
 import easyjupyter  # type: ignore
 
 import argparse
-from llama_configs import Llama3_scaled_down, Llama3_8B, BaseConfig
+from configs import Llama3_1_405B
 from model.model_text_only import TextOnlyModel
-from model.pre_train_text_only import PreTrainTextOnly, setupPreTraining
+from model.text_only_training.pre_training import PreTrainTextOnly, setupPreTraining
+
 from utils.fs_manager import resolve_checkpoint_path
 from utils.misc import print_args
 

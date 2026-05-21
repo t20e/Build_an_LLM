@@ -24,82 +24,80 @@ def prepare_pretrain_data(cfg: ConfigTemplate, tokenizer, is_overfit=False):
     """
 
     ds_info = {
-        "initial_and_lc": cfg.text_only.pretrain.initial_stage.dataset,
-        "annealing": cfg.text_only.pretrain.annealing_stage.dataset,
+        "initial_stage": cfg.text_only.pretrain.initial_stage.dataset,
+        "lc_stage": cfg.text_only.pretrain.lc_stage.dataset,
+        "annealing_stage": cfg.text_only.pretrain.annealing_stage.dataset,
     }
+    doc_end_id = tokenizer.token_to_id(cfg.special_tokens["doc_end_token"]["token"])
 
     # The pre-training has three stages: The initial and long-context stage get the same dataset. The annealing stage gets a higher quality dataset
-    for stage_name in ["initial_and_lc", "annealing"]:
-        print(f"\n--- Preparing {stage_name} stage ---")
-        print(f"chunk_size: {cfg.chunk_size}")
+    for stage_name in list(ds_info):
+        print(f"\n--- Preparing {stage_name} ---")
+        stage_cfg = getattr(cfg.text_only.pretrain, stage_name)
+        hf_batch_size = getattr(stage_cfg, "streaming_batch_size", 100)
+        print("streaming_batch_size:", hf_batch_size)
 
-        if stage_name == "initial_and_lc":
-            # Combine the initial and long-context token counts so they come from the same dataset.
-            tokens = (
-                cfg.text_only.pretrain.initial_stage.tokens
-                + cfg.text_only.pretrain.lc_stage.tokens
-            )
-        else:
-            tokens = cfg.text_only.pretrain.annealing_stage.tokens
+        tokens_target = stage_cfg.tokens
 
-        # The stream continues until it reaches the tokens needed for a stage.
-        total_tokens_written = 0
-
-        print(f"\nTargeting: {tokens:,} tokens for this stage.")
+        print(f"\nTargeting: {tokens_target:,} tokens for this stage.")
 
         prefix = "overfit_" if is_overfit else ""
         bin_file = cfg.data_dir / f"{prefix}{stage_name}.bin"
         meta_path = bin_file.with_suffix(".json")
 
         ds_stream = load_dataset(
-            ds_info[stage_name].name,
-            ds_info[stage_name].config,
+            stage_cfg.dataset.name,
+            stage_cfg.dataset.config,
             split="train",
             streaming=True,
         )
-        doc_end_id = tokenizer.token_to_id(cfg.special_tokens["doc_end_token"]["token"])
 
-        batch_text_buffer = []
-        """NOTE: There will always be more tokens saved to the binary file than is needed for training, this is because we overshoot using the chunk_size."""
+        def tokenize_batch(docs):
+            encodings = tokenizer.encode_batch(docs["text"])
+            # Append the doc_end_id to each encoded sequence
+            ids = [enc.ids + [doc_end_id] for enc in encodings]
+            return {"ids": ids}
 
-        num_docs = 0
+        tokenized_stream = ds_stream.map(
+            tokenize_batch,
+            batched=True,
+            batch_size=hf_batch_size,
+            remove_columns=list(
+                # Drops the 'text', etc... columns to save RAM
+                ds_stream.features.keys()
+            ),
+        )
+
+        # The stream continues until it reaches the tokens needed for a stage.
+        total_tokens_written = 0
+        hit_token_cap = False
 
         with open(bin_file, "wb") as f:
-            for sample in tqdm(ds_stream, desc="Streaming Dataset"):
-                batch_text_buffer.append(sample["text"])
-                num_docs += 1
+            for doc in tqdm(tokenized_stream, desc="Writing to Binary"):
 
-                if len(batch_text_buffer) >= cfg.chunk_size:
-                    # Parallel tokenization over CPU cores
-                    encoded_batches = tokenizer.encode_batch(batch_text_buffer)
-                    hit_token_cap = False
+                doc_ids = doc["ids"]
+                tokens_needed = tokens_target - total_tokens_written
 
-                    # Write to binary file
-                    for encoding in encoded_batches:
-                        ids = encoding.ids
-                        ids.append(doc_end_id)
-                        np.array(ids, dtype=cfg.dtype).tofile(f)
-                        total_tokens_written += len(ids)
+                # Cap it exactly at the tokens target
+                if len(doc_ids) >= tokens_needed:
+                    doc_ids = doc_ids[:tokens_needed]
+                    hit_token_cap = True
 
-                        if total_tokens_written >= tokens:
-                            hit_token_cap = True
-                            break
+                # Write to disk
+                np.array(doc_ids, dtype=cfg.dtype).tofile(f)
+                total_tokens_written += len(doc_ids)
 
-                    batch_text_buffer = []  # Reset the buffer
-
-                    if hit_token_cap:
-                        print(
-                            f"\nTokenized {total_tokens_written:,} tokens for this stage. (Fine if overshoot)"
-                        )
-                        break
-
-            # Any remaining texts in the buffer is discarded
+                if hit_token_cap:
+                    print(
+                        f"\nTokenized {total_tokens_written:,} tokens for this stage."
+                    )
+                    break
 
         with open(meta_path, "w") as f:
             json.dump(
                 {
                     "stage": stage_name,
-                    "total_tokens": tokens,
+                    "total_tokens": tokens_target,
                     "vocab_size": cfg.vocab_size,
                     "num_tokens_written_to_binary_file": total_tokens_written,
                 },
