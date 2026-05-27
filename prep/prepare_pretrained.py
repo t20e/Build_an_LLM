@@ -84,7 +84,7 @@ def prepare_pretrain_data(cfg: ConfigTemplate, tokenizer, is_overfit=False):
                     hit_token_cap = True
 
                 # Write to disk
-                np.array(doc_ids, dtype=cfg.dtype).tofile(f)
+                np.array(doc_ids, dtype=cfg.dataset_dtype_str).tofile(f)
                 total_tokens_written += len(doc_ids)
 
                 if hit_token_cap:

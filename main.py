@@ -1,34 +1,27 @@
-
 import easyjupyter  # type: ignore
 
 import argparse
-from configs import Llama3_1_405B
+from configs import ConfigTemplate, Llama3_1_405B, Scaled_down_text
 from model.model_text_only import TextOnlyModel
-from model.text_only_training.pre_training import PreTrainTextOnly, setupPreTraining
+from model.text_only_training.pre_training import PreTrainTextOnly
+from model.utils.model_io import load_checkpoint
+from model.optimizer_and_lr_schedule import get_optimizer
 
-from utils.fs_manager import resolve_checkpoint_path
 from utils.misc import print_args
 
 MODELS_SUITE = {
     "scaled_down_text": {
-        # 3.1 8b text-only model
-        "config_cls": Llama3_scaled_down,
+        "config_cls": Scaled_down_text,
         "model_cls": TextOnlyModel,
         "is_multimodal": False,
-        "train_pipeline": {
+        "train_phase": {
             "pretrain": {
-                "chpt_dir": "Scaled_down_Llama_3_1_Base",
                 "trainer": PreTrainTextOnly,
-                "suffix": "_Base",
             },
             "sft": {
-                "chpt_dir": "Scaled_down_Llama_3_1_SFT",
-                "suffix": "_SFT",
                 "trainer": None,
             },
             "dpo": {
-                "chpt_dir": "Scaled_down_Llama_3_1_Instruct",
-                "suffix": "_Instruct",
                 "trainer": None,
             },
         },
@@ -38,15 +31,11 @@ MODELS_SUITE = {
         "config_cls": None,
         "model_cls": None,
         "is_multimodal": True,
-        "train_pipeline": {
+        "train_phase": {
             "sft": {
-                "chpt_dir": "Scaled_down_Llama_3_11_multi_SFT",
-                "suffix": "_Multi_SFT",
                 "trainer": None,
             },
             "dpo": {
-                "chpt_dir": "Scaled_down_Llama_3_11_multi_Instruct",
-                "suffix": "_Multi_Instruct",
                 "trainer": None,
             },
         },
@@ -54,16 +43,16 @@ MODELS_SUITE = {
     # =======================================================================
     # External Meta Trained models from HuggingFace (Inference only)
     # =======================================================================
-    "3.1_8b": {
-        "config_cls": Llama3_8B,
-        "model_cls": None,
-        "is_multimodal": False,
-    },
-    "3.2_11b_multi": {
-        "config_cls": None,
-        "model_cls": None,
-        "is_multimodal": True,
-    },
+    # "3.1_8b": {
+    #     "config_cls": Llama3_8B,
+    #     "model_cls": None,
+    #     "is_multimodal": False,
+    # },
+    # "3.2_11b_multi": {
+    #     "config_cls": None,
+    #     "model_cls": None,
+    #     "is_multimodal": True,
+    # },
 }
 
 
@@ -78,6 +67,7 @@ if __name__ == "__main__":
     """
 
     parser = argparse.ArgumentParser(description="Llama 3 Training/Inference CLI.")
+    parser.add_argument("--model", type=str, default="scaled_down_text")
     parser.add_argument(
         "--phase",
         choices=["pretrain", "sft", "dpo", "inference"],
@@ -85,21 +75,19 @@ if __name__ == "__main__":
         help="The phase to train the model in.",
         required=True,
     )
-
-    parser.add_argument("--model", type=str, default="scaled_down_text")
     parser.add_argument(
         "--transition",
         action="store_true",
         help="Transition to the next phase, only load the checkpoint's weights (no optimizer/scheduler) from the previous phase.",
     )
     parser.add_argument(
-        "--checkpoint",
+        "--chpt_dir",
         type=str,
-        help="Specific step file to load. e.g., step_001000.pt. Defaults to latest.txt",
+        help="Specific global_step checkpoint directory to load. e.g., global_step_001000",
     )
 
     parser.add_argument(
-        "--dry_run",
+        "--overfit",
         action="store_true",
     )
 
@@ -117,37 +105,34 @@ if __name__ == "__main__":
             f"Models 3.2_11b_multi and 3.1_8b are only supported for inference!"
         )
 
-    if args.model == "scaled_down_text":
-        checkpoint_path, is_transition, new_chpt_save_path = resolve_checkpoint_path(
-            BaseConfig, args, MODELS_SUITE["scaled_down_text"]["train_pipeline"]
-        )
-    elif args.model == "scaled_down_multi":
-        checkpoint_path, is_transition, new_chpt_save_path = resolve_checkpoint_path(
-            BaseConfig, args, MODELS_SUITE["scaled_down_multi"]["train_pipeline"]
-        )
-
-    if is_transition or checkpoint_path is not None:
-        # Continue training, load from the config.json
-        cfg = MODELS_SUITE[args.model]["config_cls"].load_from_json(
-            checkpoint_path.parent / "config.json"
-        )
-        print(cfg)
+    if args.chpt_dir:
+        cfg = ConfigTemplate.load(args.chpt_dir)
     else:
-        # Start fresh in pretrain phase
-        cfg = MODELS_SUITE[args.model]["config_cls"]()
-        print(cfg)
+        cfg = MODELS_SUITE[args.model]["config_cls"].initialize(args.overfit)
 
-    cfg.CURR_CHPT_DIR = new_chpt_save_path
+    print(cfg)
+
     model = MODELS_SUITE[args.model]["model_cls"](cfg).to(cfg.device)
 
-    if args.dry_run:
-        print("\n------------ Dry Run ------------")
-        cfg.CURR_CHPT_DIR = cfg.CHPTS_DIR / "Scaled_down_Llama_3_1_DRY_RUN"
-        cfg.CURR_CHPT_DIR.mkdir(parents=True, exist_ok=True)
+    if args.transition and not args.chpt_dir:
+        raise ValueError("Transition requires checkpoint directory!")
+
+    optimizer = get_optimizer(cfg, model)
+
+    if args.chpt_dir:
+        if args.transition:
+            # Only load the checkpoint's weights
+            load_checkpoint(cfg, model, args.chpt_dir)
+            optimizer = None
+        else:
+            # Load the model's weights and optimizer.
+            load_checkpoint(cfg, model, args.chpt_dir, optimizer)
+
+    if args.overfit:
+        cfg.prefix = "OVERFIT_"
 
     if args.phase == "inference":
         print("\n-------- Running inference... --------")
-        # TODO: For inference, we need to use save tensors
         print("-" * 64)
         print(cfg)
         print("-" * 64)
@@ -155,14 +140,13 @@ if __name__ == "__main__":
     else:  # === Train ===
         if args.phase == "pretrain":
             if args.model == "scaled_down_text":
-                trainer = setupPreTraining(
+                trainer = PreTrainTextOnly(
                     cfg=cfg,
                     model=model,
-                    chpt_path=checkpoint_path,
-                    is_transition=is_transition,
-                    is_dry_run=args.dry_run,
+                    optimizer=optimizer,
+                    is_overfit=args.overfit,
                 )
-                trainer.train(is_dry_run=args.dry_run)
+                trainer.train()
             elif args.model == "scaled_down_multi":
                 raise NotImplementedError(
                     "Multi-modal pre-training not yet implemented!"

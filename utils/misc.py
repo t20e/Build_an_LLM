@@ -46,10 +46,8 @@ def print_config(cfg: BaseConfig) -> str:
                 - vocab_size               = {cfg.vocab_size}
             \n
             [Active Run]
-                - Runtime [seq_len]    = {cfg.seq_len}
                 - num_workers              = {cfg.num_workers}
                 - device                   = {cfg.device}
-                - step_counter             = {cfg.step_counter}
             \n
             [Stages Configs]
                 [Pre-Training Stage]
@@ -65,14 +63,14 @@ def print_config(cfg: BaseConfig) -> str:
 
                     > Long-Context Stage:
                         - tokens           = {cfg.text_only.pretrain.lc_stage.tokens}
-                        - content_len      = {cfg.text_only.pretrain.lc_stage.content_len}
+                        - seq_len      = {cfg.text_only.pretrain.lc_stage.seq_len}
                         - grad_accum_steps = {None}
                         - dataset          = {cfg.text_only.pretrain.lc_stage.dataset.name} | {cfg.text_only.pretrain.lc_stage.dataset.config}
                     \n
 
                     > Annealing Stage:
                         - tokens           = {cfg.text_only.pretrain.annealing_stage.tokens}
-                        - content_len      = {cfg.text_only.pretrain.annealing_stage.content_len}
+                        - seq_len      = {cfg.text_only.pretrain.annealing_stage.seq_len}
                         - grad_accum_steps = {None}
                         - dataset          = {cfg.text_only.pretrain.annealing_stage.dataset.name} | {cfg.text_only.pretrain.annealing_stage.dataset.config}
             \n\n

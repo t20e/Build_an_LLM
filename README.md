@@ -4,7 +4,7 @@
 
 -#TODO: Move training to the cloud.
 
-✨ This project is a guide to building a large language model like ChatGPT, Gemini, or Llama from scratch. I will build and train a scale down version of the Llama 3 architecture. Also, I will add options to import the pre-trained Llama 3 models. I choose Llama over the Gemini and ChatGPT models because it is the most open-sourced and well-documented. Almost all LLMs are built on the Transformer-decoder architecture, with some minor tweaks.
+✨ This project is a guide to building a large language model like ChatGPT, Gemini, or Llama from scratch. I will build and train a scale down version of the Llama 3 architecture. I choose Llama over the Gemini and ChatGPT models because it is the most open-sourced and well-documented. Almost all LLMs are built on the Transformer-decoder architecture, with some minor tweaks.
 
 **What if you want to train a full scale model:**
 
@@ -64,7 +64,7 @@
 
 The fundamental block of an LLM is the **Transformer Decoder**. Most modern frontier LLMs modify the decoder by adding a **RMSNorm**, **RoPE**, and **GQA** sub-layer. There are other variations, for example the [Google Gemma model](https://developers.googleblog.com/gemma-explained-new-in-gemma-2/#:~:text=the%20new%20models%3A-,Key%20Differences,-Gemma%202%20shares) has **GeGLU** non-linearity.
 
-The Llama 3 architecture made the following modifications to the prior models:
+The Llama 3 architecture made the following modifications to the prior Llama models:
 
 1. Added **GQA Attention** with $\mathbf{8}$ key-value heads.
 2. Used an attention mask that prevents self-attention between different documents within the same sequence.

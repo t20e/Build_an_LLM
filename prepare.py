@@ -9,7 +9,7 @@ import easyjupyter
 from prep.prepare_pretrained import prepare_pretrain_data
 import argparse
 import os
-from configs import Llama3_1_405B
+from configs import Llama3_1_405B, Scaled_down_text
 from utils.misc import print_args
 from model.bpe_tokenizer import BPETokenizer
 from datasets import load_dataset
@@ -23,8 +23,8 @@ warnings.filterwarnings("ignore", category=UserWarning, module="multiprocessing"
 
 
 MODELS_SUITE = {
+    "Scaled_down_text": Scaled_down_text,
     "3.1_405B": Llama3_1_405B,
-    # TODO add more
 }
 
 if __name__ == "__main__":
@@ -38,9 +38,7 @@ if __name__ == "__main__":
         ],
     )
 
-    parser.add_argument(
-        "--model", type=str, default="3.1_405B"
-    )  # TODO made default my scaled down model!
+    parser.add_argument("--model", type=str, default="Scaled_down_text")
 
     parser.add_argument(
         "--overfit",

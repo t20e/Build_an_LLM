@@ -5,90 +5,74 @@ from pathlib import Path
 import torch
 
 if TYPE_CHECKING:
-    from llama_configs import BaseConfig
-    from model.decoder import Decoder
+    from configs import ConfigTemplate
+    from model.model_text_only import TextOnlyModel
 
 
 def save_checkpoint(
-    cfg: BaseConfig,
-    model: Decoder,
+    cfg: ConfigTemplate,
+    model: TextOnlyModel,
     optimizer: torch.optim.AdamW,
-    scheduler: torch.optim.lr_scheduler.LambdaLR,
-    step_counter: int,
     loss_history: list,
-    avg_loss: float,
+    save_path: Path,  # ex: .../Scaled_down_Base/global_step_000250
 ):
     """
     Save a checkpoint.
-
-    Args:
-        cfg: The config object.
-        model: The model object.
-        optimizer: The optimizer object.
-        scheduler: The scheduler object.
-        step_counter: The step counter that was reached during training.
-        loss_history: The loss history during training.
-        avg_loss: The last loss during training.
     """
-    chpt_filename = f"step_{step_counter:06d}.pt"
-    save_path = cfg.CURR_CHPT_DIR / chpt_filename
-
     torch.save(
         {
-            "step_counter": step_counter,
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
-            "scheduler_state_dict": scheduler.state_dict(),
-            "loss_history": loss_history, # NOTE: Loss history can get very large, consider capping it or savings it in its own JSON fle, and keeping only the last N values.
-            "avg_loss": avg_loss,
+            "loss_history": loss_history,  # NOTE: Loss history can get very large, consider capping it or savings it in its own JSON fle, and keeping only the last N values.
         },
-        save_path,
+        save_path / "checkpoint.pt",
     )
 
-    # Update latest.txt
-    with open(cfg.CURR_CHPT_DIR / "latest.txt", "w") as f:
-        f.write(chpt_filename)
+    cfg.save(save_path)
+
+    # # Update latest.txt
+    # with open(cfg.chpts_dir / "latest.txt", "w") as f:
+    #     f.write(save_path.name)
 
     print(f"Saved Checkpoint to -> {save_path}")
 
 
 def load_checkpoint(
-    cfg: BaseConfig,
-    model: torch.nn.Module,
-    chpt_path: Path,
-    optimizer: torch.optim.Optimizer = None,
-    scheduler: torch.optim.lr_scheduler.LambdaLR = None,
+    cfg,
+    model,
+    chpt_dir: Path,
+    optimizer=None,
 ):
     """
-    Load a checkpoint. If optimizer and scheduler are provided, their states are also loaded.
+    Load a checkpoint folder snapshot containing the model states.
 
     Args:
-        chpt_path: Direct path to the checkpoint file.
+        optimizer: If true, loads the model's optimizer as well
     """
-    if not chpt_path.exists():
-        raise FileNotFoundError(f"No checkpoint found at: {chpt_path}")
+    if not chpt_dir.exists():
+        raise FileNotFoundError(f"Checkpoint directory found at: {chpt_dir}")
 
-    print(f"Loading checkpoint at: {chpt_path}...")
-    checkpoint = torch.load(chpt_path, map_location=cfg.device, weights_only=True)
+    chpt_file_path = chpt_dir / "checkpoint.pt"
+    if not chpt_file_path.exists():
+        raise FileNotFoundError(f"Missing checkpoint.pt in: {chpt_dir}")
 
-    model.load_state_dict(checkpoint["model_state_dict"])  # weights
+    print(f"Loading checkpoint states from: {chpt_file_path}...")
+    checkpoint = torch.load(
+        chpt_file_path,
+        map_location=cfg.device,
+        weights_only=True,
+    )
 
-    # Only load the optimizer and scheduler, when continuing training
-    if optimizer is not None and "optimizer_state_dict" in checkpoint:
+    model.load_state_dict(checkpoint["model_state_dict"])  # Weights
+
+    if optimizer is not None:
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
-        if cfg.device == "mps":
+        if cfg.device.type == "mps":
             # MPS device bug issue, fix by moving optimizer state tensors to mps device
             for state in optimizer.state.values():
                 for k, v in state.items():
                     if isinstance(v, torch.Tensor):
                         state[k] = v.to(cfg.device)
 
-    if scheduler is not None and "scheduler_state_dict" in checkpoint:
-        scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
-
-    cfg.step_counter = checkpoint.get("step_counter", 0)
-
-    print(
-        f"Successfully loaded checkpoint: {chpt_path.name} (Step: {cfg.step_counter})"
-    )
+    print(f"Successfully loaded checkpoint: {chpt_file_path.name}")
