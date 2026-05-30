@@ -93,6 +93,10 @@ def prepare_pretrain_data(cfg: ConfigTemplate, tokenizer, is_overfit=False):
                     )
                     break
 
+            # Force the OS to immediately write the tokens to hard drive
+            f.flush()
+            os.fsync(f.fileno())
+
         with open(meta_path, "w") as f:
             json.dump(
                 {

@@ -6,6 +6,9 @@ It:
 """
 
 import easyjupyter
+import gc
+
+import sys
 from prep.prepare_pretrained import prepare_pretrain_data
 import argparse
 import os
@@ -91,4 +94,8 @@ if __name__ == "__main__":
         case "dpo":
             # TODO Can only load the tokenizer, not train it.
             pass
+
+    # Kill the HuggingFace background processes so it doesn't attempt retries
+    gc.collect()
     os._exit(0)
+    # sys.exit(0)
