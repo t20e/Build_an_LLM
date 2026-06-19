@@ -8,17 +8,17 @@
 
 **What if you want to train a full scale model:**
 
-✨ There are many methods that I did not implement that are worth looking into if you do plan on training on a massive dataset, like the 15.6T tokens that Llama used. Here are some:
+✨ There are many methods that I did not implement that are worth looking into if you do plan on training on a massive dataset (like the 15.6T tokens) and a large model like th 405B. Here are some:
 
-1. Since all the datasets for my scaled-down model will be very small compared to the 15.6T dataset, I decided to store each dataset into a large binary file. For a dataset with 15.6T tokens, you will instead want to implement sharding where each dataset is split into binary shards.
-2. You will likely need a different dataset that I am using! I use FineWeb-edu, PG19, FinePdfs, (#TODO the other datasets i will use)
+1. All the datasets for my scaled-down model will be very small compared to the 15.6T dataset, I store each dataset into a large binary file. For a dataset with 15.6T tokens, you will instead want to implement sharding where each dataset is split into binary shards.
+2. Use different datasets than I'm using (FineWeb-edu, PG19, FinePdfs, etc...).
    1. The PG19 dataset contains long sequences that the long-context stage of pre-training requires, but its size is only 7.06GB, so for a full scaled model you will need more sequences than the PG19 contains.
-3. TODO add more
 
-**Training an LLM Phases:**
 
-- Phase 1 (Pre-train): You train a base model on a massive corpus of raw text using self-supervised learning, where its only objective is to predict the next token (e.g., the next word in a sentence). Here the model learns grammar, facts, and reasoning.
-- Phase 2 (Post-train): You take the base model and train it to become a chat/assistant model. This is done by applying fine tuning using structured conversational data (Prompt/Response pairs), which is often followed by Reinforcement Learning from Human Feedback or direct preference optimization to force the model to behave an assistant. This model is called the Instruct model.
+**LLM Training Phases:**
+
+- [Phase 1 (Pre-train)](./model/text_only_training/pre_training.ipynb): You train a base model on a massive corpus of raw text using self-supervised learning, where its only objective is to predict the next token (e.g., the next word in a sentence). Here the model learns grammar, facts, and reasoning.
+- [Phase 2 (Post-train)](./model/text_only_training/post_training.ipynb): You take the base model and train it to become a chat/assistant model. This is done by applying fine tuning using structured conversational data (Prompt/Response pairs), which is often followed by Reinforcement Learning from Human Feedback or direct preference optimization to force the model to behave an assistant. This model is called the Instruct model.
 - Multi-modality (i.e., model can work with text + vision, etc...): Llama 3 multi-modal implementation:
   - Llama 3 adds an encoder for vision.
 
@@ -29,7 +29,7 @@
 - [My Transformer Project](https://github.com/t20e/AI_projects_and_res/tree/main/Transformer)
 - [Llama 3 Paper](https://arxiv.org/abs/2407.21783) | [Llama 2 Paper](https://arxiv.org/abs/2307.09288) | [Llama 1 Paper](https://arxiv.org/abs/2302.13971)
 
-**Goals:**
+🥅 **Goals:**
 
 - [x] Add and pre-process datasets:
   - Note: The Llama 3 models were trained on a different datasets than the ones I will be using!
@@ -52,8 +52,7 @@
     - [ ] Direct Preference Optimization (DPO)
 - [ ] Train a scaled down model.
 - [ ] Import a Pre-trained Llama model (e.g., Llama 3.1 8B) from HuggingFace to showcase a SOTA model working with my built-out architecture.
-- [ ] Implement Multi-modal so that the model works with:
-  - [ ] Vision
+- [ ] Implement Multi-modal so that the model works with Vision.
 
 ## Llama 3 Architecture
 
@@ -101,6 +100,9 @@ The Llama 3 architecture made the following modifications to the prior Llama mod
 **Build The Pre-Training Dataset:**
 
 ```bash
+# Optional: 
+#    1. use the --tokenizer_only to only train the tokenizer and not build the binary datasets.
+#    2. To build small overfit dataset add --overfit
 time caffeinate -ism python prepare.py --d pretrain 
 ```
 

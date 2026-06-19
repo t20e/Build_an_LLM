@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 def prepare_pretrain_data(cfg: ConfigTemplate, tokenizer, is_overfit=False):
     """
-    Builds the binary dataset from the a dataset for the pre-training phase.
+    Builds the binary datasets (train and validation partitions) for the pre-training phase.
 
     Pipeline:
         - Stream + parallel tokenize utilizing all CPU cores -> append tokens to binary file -> and repeat until it reaches the tokens need for a stage.
@@ -34,15 +34,16 @@ def prepare_pretrain_data(cfg: ConfigTemplate, tokenizer, is_overfit=False):
     for stage_name in list(ds_info):
         print(f"\n--- Preparing {stage_name} ---")
         stage_cfg = getattr(cfg.text_only.pretrain, stage_name)
-        hf_batch_size = getattr(stage_cfg, "streaming_batch_size", 100)
-        print("streaming_batch_size:", hf_batch_size)
-
+        hf_batch_size = getattr(stage_cfg, "streaming_batch_size")
         tokens_target = stage_cfg.tokens
+        val_tokens_target = stage_cfg.val_tokens
 
-        print(f"\nTargeting: {tokens_target:,} tokens for this stage.")
+        print("streaming_batch_size:", hf_batch_size)
+        print(f"Targeting: {tokens_target:,} train tokens | {val_tokens_target:,} validation tokens. tokens for this stage.")
 
         prefix = "overfit_" if is_overfit else ""
         bin_file = cfg.data_dir / f"{prefix}{stage_name}.bin"
+        val_bin_file = cfg.data_dir / f"{prefix}{stage_name}_val.bin"
         meta_path = bin_file.with_suffix(".json")
 
         ds_stream = load_dataset(
@@ -69,43 +70,65 @@ def prepare_pretrain_data(cfg: ConfigTemplate, tokenizer, is_overfit=False):
         )
 
         # The stream continues until it reaches the tokens needed for a stage.
-        total_tokens_written = 0
+        total_train_written = 0
+        total_val_written = 0
         hit_token_cap = False
 
-        with open(bin_file, "wb") as f:
-            for doc in tqdm(tokenized_stream, desc="Writing to Binary"):
-
+        # Open both the train and val binary files concurrently
+        with open(bin_file, "wb") as f_train, open(val_bin_file, "wb") as f_val:
+            for doc in tqdm(tokenized_stream, desc="Processing Stream"):
                 doc_ids = doc["ids"]
-                tokens_needed = tokens_target - total_tokens_written
 
-                # Cap it exactly at the tokens target
-                if len(doc_ids) >= tokens_needed:
-                    doc_ids = doc_ids[:tokens_needed]
-                    hit_token_cap = True
+                # Fill validation bin first
+                if total_val_written < val_tokens_target:
+                    val_needed =  val_tokens_target - total_val_written
+                    if len(doc_ids) >= val_needed:
+                        # Slice exactly what we need to complete validation
+                        val_slice = doc_ids[:val_needed]
+                        np.array(val_slice, dtype=cfg.dataset_dtype_str).tofile(f_val)
+                        total_val_written += len(val_slice)
+                        continue
+                    else:
+                        np.array(doc_ids, dtype=cfg.dataset_dtype_str).tofile(f_val)
+                        total_val_written += len(doc_ids)
 
-                # Write to disk
-                np.array(doc_ids, dtype=cfg.dataset_dtype_str).tofile(f)
-                total_tokens_written += len(doc_ids)
+                # Validation partition complete, now fill the train binary
+                else:
+                    train_needed = tokens_target - total_train_written
 
-                if hit_token_cap:
-                    print(
-                        f"\nTokenized {total_tokens_written:,} tokens for this stage."
-                    )
-                    break
+                    if len(doc_ids) >= train_needed:
+                        doc_ids = doc_ids[:train_needed]
+                        np.array(doc_ids, dtype=cfg.dataset_dtype_str).tofile(f_train)
+                        total_train_written += len(doc_ids)
+                        break
+                    else:
+                        np.array(doc_ids, dtype=cfg.dataset_dtype_str).tofile(f_train)
+                        total_train_written += len(doc_ids)
 
             # Force the OS to immediately write the tokens to hard drive
-            f.flush()
-            os.fsync(f.fileno())
+            f_train.flush()
+            os.fsync(f_train.fileno())
+            f_val.flush()
+            os.fsync(f_val.fileno())
+
+            print(
+                f"\nTokenized token counts for this stage."
+                f"    Total train tokens: {total_train_written:,}"
+                f"    Total val tokens: {total_val_written:,}"
+            )
+
 
         with open(meta_path, "w") as f:
             json.dump(
                 {
                     "stage": stage_name,
-                    "total_tokens": tokens_target,
                     "vocab_size": cfg.vocab_size,
-                    "num_tokens_written_to_binary_file": total_tokens_written,
+                    "train_tokens_target": tokens_target,
+                    "total_train_written": total_train_written,
+                    "val_tokens_target": val_tokens_target,
+                    "total_val_written": total_val_written,
                 },
                 f,
                 indent=4,
             )
-        print(f"\nFinished tokenizing {stage_name} dataset to {bin_file}")
+        print(f"\nFinished processing stage: {stage_name}\n -> Train: {bin_file}\n -> Val: {val_bin_file}")

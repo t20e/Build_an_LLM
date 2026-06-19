@@ -9,6 +9,7 @@ from model.optimizer_and_lr_schedule import get_optimizer
 
 from utils.misc import print_args
 
+
 MODELS_SUITE = {
     "scaled_down_text": {
         "config_cls": Scaled_down_text,
@@ -83,7 +84,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--chpt_dir",
         type=str,
-        help="Specific global_step checkpoint directory to load. e.g., global_step_001000",
+        help="Specific num_grad_updates checkpoint directory to load. e.g., num_grad_updates_001000",
     )
 
     parser.add_argument(
@@ -136,6 +137,7 @@ if __name__ == "__main__":
         print("-" * 64)
         print(cfg)
         print("-" * 64)
+
 
     else:  # === Train ===
         if args.phase == "pretrain":

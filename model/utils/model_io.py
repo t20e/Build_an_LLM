@@ -14,7 +14,7 @@ def save_checkpoint(
     model: TextOnlyModel,
     optimizer: torch.optim.AdamW,
     loss_history: list,
-    save_path: Path,  # ex: .../Scaled_down_Base/global_step_000250
+    save_path: Path,  # ex: .../Scaled_down_Base/num_grad_updates_000250
 ):
     """
     Save a checkpoint.
@@ -29,11 +29,6 @@ def save_checkpoint(
     )
 
     cfg.save(save_path)
-
-    # # Update latest.txt
-    # with open(cfg.chpts_dir / "latest.txt", "w") as f:
-    #     f.write(save_path.name)
-
     print(f"Saved Checkpoint to -> {save_path}")
 
 
