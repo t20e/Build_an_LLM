@@ -2,6 +2,7 @@
     "python.analysis.extraPaths": [
         "./.easyJupyter_cache"
     ],
+
     "cSpell.words": [
         "accum",
         "allclose",
@@ -19,20 +20,25 @@
         "finepdfs",
         "fineweb",
         "freqs",
+        "hendrycks",
         "hparams",
         "hyperparams",
+        "infinitebench",
         "Karpathy's",
         "labelcolor",
         "linestyle",
+        "Loglikelihood",
         "Mbps",
         "memmap",
         "multimodal",
+        "niah",
         "pbar",
         "perc",
         "percs",
         "Polyak",
         "pretrain",
         "pretrained",
+        "qasper",
         "rtol",
         "sharex",
         "smollm",

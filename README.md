@@ -1,6 +1,7 @@
 # How To Build An LLM
 
 -#TODO make sure this renders in the github repo
+-#TODO I have the pre-training stages worded as "pre-training stages", rewrite it to "pre-training sub-stages"
 
 -#TODO: Move training to the cloud.
 
@@ -13,6 +14,7 @@
 1. All the datasets for my scaled-down model will be very small compared to the 15.6T dataset, I store each dataset into a large binary file. For a dataset with 15.6T tokens, you will instead want to implement sharding where each dataset is split into binary shards.
 2. Use different datasets than I'm using (FineWeb-edu, PG19, FinePdfs, etc...).
    1. The PG19 dataset contains long sequences that the long-context stage of pre-training requires, but its size is only 7.06GB, so for a full scaled model you will need more sequences than the PG19 contains.
+3. Scale up the scaled down config to match your desired model size.
 
 
 **LLM Training Phases:**
