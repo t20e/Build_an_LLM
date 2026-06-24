@@ -15,6 +15,7 @@
 2. Use different datasets than I'm using (FineWeb-edu, PG19, FinePdfs, etc...).
    1. The PG19 dataset contains long sequences that the long-context stage of pre-training requires, but its size is only 7.06GB, so for a full scaled model you will need more sequences than the PG19 contains.
 3. Scale up the scaled down config to match your desired model size.
+4. I did not implement all evaluation benchmarks, check [run_evaluate.py](./run_evaluate.py).
 
 
 **LLM Training Phases:**
