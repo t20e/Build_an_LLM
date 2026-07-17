@@ -16,6 +16,7 @@
    1. The PG19 dataset contains long sequences that the long-context stage of pre-training requires, but its size is only 7.06GB, so for a full scaled model you will need more sequences than the PG19 contains.
 3. Scale up the scaled down config to match your desired model size.
 4. I did not implement all evaluation benchmarks, check [run_evaluate.py](./run_evaluate.py).
+5. Use [OpenAi's TikToken Tokenizer](https://github.com/openai/tiktoken), instead of my custom scaled-down tokenizer.
 
 
 **LLM Training Phases:**
@@ -36,10 +37,11 @@
 
 - [x] Add and pre-process datasets:
   - Note: The Llama 3 models were trained on a different datasets than the ones I will be using!
-  - [Text-Only model pertaining datasets](./prep/prepare_pretrained.py):
+  - [Text-Only model pre-training datasets](./prep/prepare_pretrained.py):
     - [x] [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) 10BT subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. This dataset is used for the initial stage.
     - [x] [PG19](https://huggingface.co/datasets/emozilla/pg19) used for the long-context stage. I needed a dataset that contains long sequences for this stage.
     - [x] [HuggingFaceFW/finepdfs](https://huggingface.co/datasets/HuggingFaceFW/finepdfs) used for the annealing stage.
+    - [ ] #TODO add post-training datasets, e..g, SFT: ultrachat_200k and DPO: ultrafeedback_binarized
 - [x] Implement Llama 3 architecture components.
   - [x] Build the [tokenizer](./model/tokenizer.ipynb).
   - [x] [RoPE](./model/RoPE.ipynb)
@@ -49,13 +51,17 @@
   - [x] AdamW Optimizer
   - [x] The transformer [decoder](./model/decoder.ipynb)
 - [ ] Build the training pipeline.
-  - [ ] Pre-training
+  - [x] Pre-training
+    - [x] Initial
+    - [x] Long-Context
+    - [x] Annealing
   - [ ] Post-training:
     - [ ] Supervised Fine-tuning (SFT)
     - [ ] Direct Preference Optimization (DPO)
-- [ ] Train a scaled down model.
-- [ ] Import a Pre-trained Llama model (e.g., Llama 3.1 8B) from HuggingFace to showcase a SOTA model working with my built-out architecture.
 - [ ] Implement Multi-modal so that the model works with Vision.
+- [ ] Import a Pre-trained model (e.g., Llama 3.1 8B) from HuggingFace to verify if my implementation is correct.
+- [ ] Train a scaled down model.
+- [ ] Train a Multi-modal model.
 
 ## Llama 3 Architecture
 
