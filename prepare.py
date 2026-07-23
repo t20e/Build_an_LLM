@@ -1,8 +1,8 @@
 """
 - Run this script before main.py
 It:
-    1. Checks if a trained Tokenizer exists, if not, train it.
-    2. Builds the binary dataset from the raw text dataset.
+    1. Checks if a trained Tokenizer exists; if not, train it.
+    2. Builds a binary (.bin) dataset file from the raw text dataset.
 """
 
 import easyjupyter
@@ -89,6 +89,8 @@ if __name__ == "__main__":
             if not args.tokenizer_only:
                 prepare_pretrain_data(cfg, tokenizer, args.overfit)
         case "sft":
+            # NOTE: My post-training datasets are significantly smaller than my pre-trained dataset.
+            # TODO if above not is good, then just have this prepare for the pre-trained datasets!
             # TODO Can only load the tokenizer, not train it.
             pass
         case "dpo":

@@ -1,11 +1,8 @@
 # How To Build An LLM
 
--#TODO make sure this renders in the github repo
--#TODO I have the pre-training stages worded as "pre-training stages", rewrite it to "pre-training sub-stages"
+✨ This project is a guide to building a large language model like ChatGPT, Gemini, or Llama from scratch. I will build and train a scale down version of the Llama 3 architecture. I choose Llama over the Gemini and ChatGPT models because it is the most open-sourced and well-documented. Almost all LLMs are built on the Transformer-decoder architecture, with some minor tweaks. 
 
--#TODO: Move training to the cloud.
-
-✨ This project is a guide to building a large language model like ChatGPT, Gemini, or Llama from scratch. I will build and train a scale down version of the Llama 3 architecture. I choose Llama over the Gemini and ChatGPT models because it is the most open-sourced and well-documented. Almost all LLMs are built on the Transformer-decoder architecture, with some minor tweaks.
+- Note: The Llama 3 paper was built on the pervious llama 2 and 1 papers, so if the third paper does not elaborate on a topic, it is likely covered in previous papers.
 
 **What if you want to train a full scale model:**
 
@@ -17,7 +14,6 @@
 3. Scale up the scaled down config to match your desired model size.
 4. I did not implement all evaluation benchmarks, check [run_evaluate.py](./run_evaluate.py).
 5. Use [OpenAi's TikToken Tokenizer](https://github.com/openai/tiktoken), instead of my custom scaled-down tokenizer.
-
 
 **LLM Training Phases:**
 
@@ -41,7 +37,10 @@
     - [x] [FineWeb-edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu) 10BT subset of the [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) dataset. This dataset is used for the initial stage.
     - [x] [PG19](https://huggingface.co/datasets/emozilla/pg19) used for the long-context stage. I needed a dataset that contains long sequences for this stage.
     - [x] [HuggingFaceFW/finepdfs](https://huggingface.co/datasets/HuggingFaceFW/finepdfs) used for the annealing stage.
-    - [ ] #TODO add post-training datasets, e..g, SFT: ultrachat_200k and DPO: ultrafeedback_binarized
+  - Text-Only model post-training datasets:
+    - [ ] Reward Model training ds: [HuggingFaceH4/ultrafeedback_binarized](https://huggingface.co/datasets/HuggingFaceH4/ultrafeedback_binarized)
+    - [ ] #TODO add SFT and DPO
+
 - [x] Implement Llama 3 architecture components.
   - [x] Build the [tokenizer](./model/tokenizer.ipynb).
   - [x] [RoPE](./model/RoPE.ipynb)
@@ -56,6 +55,7 @@
     - [x] Long-Context
     - [x] Annealing
   - [ ] Post-training:
+    - [ ] Reward Model (RM)
     - [ ] Supervised Fine-tuning (SFT)
     - [ ] Direct Preference Optimization (DPO)
 - [ ] Implement Multi-modal so that the model works with Vision.
